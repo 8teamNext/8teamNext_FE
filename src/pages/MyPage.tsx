@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  User, 
   Settings, 
   History, 
   Trash2, 
   Save, 
   Github, 
   FileText,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  ArrowRight,
+  Activity,
+  MessageSquare,
+  Sparkles
 } from 'lucide-react';
-import Card from '../components/Card';
 import { api, UserProfile, AnalysisHistoryItem } from '../utils/api';
 
 interface MyPageProps {
@@ -112,31 +115,51 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
     }
   };
 
+  const getHistoryIcon = (type: string) => {
+    switch (type) {
+      case 'github': return <Github size={16} className="text-zinc-600" />;
+      case 'gap': return <Activity size={16} className="text-amber-600" />;
+      case 'resume-github': return <FileText size={16} className="text-blue-600" />;
+      case 'interview': return <MessageSquare size={16} className="text-indigo-600" />;
+      case 'cover-letter': return <Sparkles size={16} className="text-purple-600" />;
+      default: return <History size={16} className="text-zinc-600" />;
+    }
+  };
+
+  const getHistoryIconBg = (type: string) => {
+    switch (type) {
+      case 'github': return 'bg-zinc-100';
+      case 'gap': return 'bg-amber-50';
+      case 'resume-github': return 'bg-blue-50';
+      case 'interview': return 'bg-indigo-50';
+      case 'cover-letter': return 'bg-purple-50';
+      default: return 'bg-zinc-100';
+    }
+  };
+
   return (
-    <div style={styles.container}>
-      <div className="header-section">
-        <h1>마이페이지</h1>
-        <p>기본 인적 사항 및 이력서/자기소개서 파일을 관리하고 이전의 AI 분석 기록을 확인합니다.</p>
+    <div className="pb-12 px-4">
+      <div className="mb-8 border-b border-zinc-200 pb-5">
+        <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5 font-sans">마이페이지</h1>
+        <p className="text-xs text-zinc-500 m-0">기본 인적 사항 및 이력서/자기소개서 파일을 관리하고 이전의 AI 분석 기록을 확인합니다.</p>
       </div>
 
       {/* Profile / History Tab buttons */}
-      <div style={styles.tabContainer}>
+      <div className="flex gap-1 border-b border-zinc-200 pb-2 mb-6">
         <button
           onClick={() => setActiveTab('profile')}
-          style={{
-            ...styles.tabBtn,
-            ...(activeTab === 'profile' ? styles.tabBtnActive : {})
-          }}
+          className={`inline-flex items-center gap-1.5 bg-transparent border-0 py-2 px-3.5 text-xs font-medium cursor-pointer rounded-md transition duration-150 ${
+            activeTab === 'profile' ? 'bg-zinc-100 text-zinc-900 font-semibold' : 'text-zinc-500 hover:text-zinc-900'
+          }`}
         >
           <Settings size={15} />
           <span>내 정보 & 기본 문서 관리</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          style={{
-            ...styles.tabBtn,
-            ...(activeTab === 'history' ? styles.tabBtnActive : {})
-          }}
+          className={`inline-flex items-center gap-1.5 bg-transparent border-0 py-2 px-3.5 text-xs font-medium cursor-pointer rounded-md transition duration-150 ${
+            activeTab === 'history' ? 'bg-zinc-100 text-zinc-900 font-semibold' : 'text-zinc-500 hover:text-zinc-900'
+          }`}
         >
           <History size={15} />
           <span>과거 분석 기록 ({history.length}건)</span>
@@ -144,29 +167,29 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
       </div>
 
       {error && (
-        <div style={styles.errorContainer}>
-          <AlertCircle size={16} color="#ef4444" style={{ marginTop: '2px' }} />
+        <div className="bg-red-50 border border-red-200 text-red-800 p-2.5 rounded-md text-xs flex items-center gap-2 mb-4">
+          <AlertCircle size={16} className="text-red-500 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div style={styles.successContainer}>
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-2.5 rounded-md text-xs font-semibold mb-4">
           <span>{success}</span>
         </div>
       )}
 
       {/* Tab Contents */}
       {activeTab === 'profile' ? (
-        <form onSubmit={handleSaveProfile} style={styles.form}>
-          <div className="grid grid-2">
+        <form onSubmit={handleSaveProfile} className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Account Settings */}
-            <div style={styles.card}>
-              <h3 style={styles.cardHeaderTitle}>인적 사항 및 깃허브 설정</h3>
-              <p style={styles.cardHeaderDesc}>기본 분석 요청에 사용될 계정 정보입니다.</p>
+            <div className="bg-white border border-zinc-200 rounded-lg p-5 shadow-xs">
+              <h3 className="text-sm font-bold text-zinc-900 m-0 mb-0.5">인적 사항 및 깃허브 설정</h3>
+              <p className="text-xs text-zinc-500 m-0 mb-5">기본 분석 요청에 사용될 계정 정보입니다.</p>
 
-              <div className="form-group">
-                <label className="form-label">이름</label>
+              <div className="form-group mb-5">
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">이름</label>
                 <input
                   type="text"
                   className="form-input"
@@ -176,110 +199,121 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">이메일 주소</label>
+              <div className="form-group mb-5">
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">이메일 주소</label>
                 <input
                   type="email"
-                  className="form-input"
+                  className="form-input bg-zinc-50 text-zinc-400 cursor-not-allowed"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   disabled
-                  style={{ backgroundColor: '#fafafa', color: '#888888', cursor: 'not-allowed' }}
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">기본 GitHub 계정명</label>
-                <div style={styles.githubBox}>
-                  <Github size={15} color="#888888" style={{ marginRight: '0.375rem' }} />
-                  <span style={{ fontSize: '0.8rem', color: '#888888', fontFamily: 'var(--font-mono)' }}>github.com/</span>
+              <div className="form-group mb-0">
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">기본 GitHub 계정명</label>
+                <div className="flex items-center border border-zinc-200 rounded-md px-2 py-0.5 bg-white">
+                  <Github size={15} className="text-zinc-400 mr-1.5 shrink-0" />
+                  <span className="text-xs text-zinc-400 font-mono shrink-0 select-none">github.com/</span>
                   <input
                     type="text"
-                    className="form-input"
+                    className="flex-grow border-0 outline-none p-1 text-xs text-zinc-900 font-mono bg-transparent"
                     value={githubUsername}
                     onChange={(e) => setGithubUsername(e.target.value)}
-                    style={{ border: 'none', padding: '0.25rem 0.5rem', fontFamily: 'var(--font-mono)' }}
                   />
                 </div>
               </div>
             </div>
 
             {/* Resume & CV Storage */}
-            <div style={styles.card}>
-              <h3 style={styles.cardHeaderTitle}>기본 이력서 및 자기소개서</h3>
-              <p style={styles.cardHeaderDesc}>분석 실행 시 파일이 제공되지 않을 때 자동 대입될 기본 문서 내용입니다.</p>
+            <div className="bg-white border border-zinc-200 rounded-lg p-5 shadow-xs">
+              <h3 className="text-sm font-bold text-zinc-900 m-0 mb-0.5">기본 이력서 및 자기소개서</h3>
+              <p className="text-xs text-zinc-500 m-0 mb-5">분석 실행 시 파일이 제공되지 않을 때 자동 대입될 기본 문서 내용입니다.</p>
 
-              <div className="form-group">
-                <label className="form-label">기본 이력서 텍스트</label>
+              <div className="form-group mb-5">
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">기본 이력서 텍스트</label>
                 <textarea
-                  className="form-textarea"
+                  className="form-textarea min-h-[110px] text-xs"
                   value={resumeText}
                   onChange={(e) => setResumeText(e.target.value)}
-                  style={{ minHeight: '110px', fontSize: '0.825rem' }}
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">기본 자기소개서 텍스트</label>
+              <div className="form-group mb-0">
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">기본 자기소개서 텍스트</label>
                 <textarea
-                  className="form-textarea"
+                  className="form-textarea min-h-[110px] text-xs"
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
-                  style={{ minHeight: '110px', fontSize: '0.825rem' }}
                 />
               </div>
             </div>
           </div>
 
-          <div style={styles.saveWrapper}>
-            <button type="submit" className="btn btn-primary" style={styles.saveBtn}>
+          <div className="flex justify-end">
+            <button type="submit" className="btn btn-primary py-2 px-5 text-xs">
               <Save size={15} /> 변경 내용 저장하기
             </button>
           </div>
         </form>
       ) : (
-        /* History Log Table */
-        <div style={styles.historySection}>
+        /* History Log List - Premium Activity Feed Design */
+        <div className="w-full">
           {history.length > 0 ? (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>진단 유형</th>
-                    <th>분석 일자</th>
-                    <th>요약 정보</th>
-                    <th style={{ width: '80px', textAlign: 'center' }}>삭제</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((item) => (
-                    <tr key={item.id}>
-                      <td>
+            <div className="flex flex-col gap-4">
+              {history.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="bg-white border border-zinc-200 rounded-xl p-5 hover:border-zinc-300 hover:shadow-xs transition-all duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Left Icon circle */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getHistoryIconBg(item.type)}`}>
+                      {getHistoryIcon(item.type)}
+                    </div>
+
+                    {/* Middle Info */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={getHistoryBadgeClass(item.type)}>
                           {getHistoryBadgeText(item.type)}
                         </span>
-                      </td>
-                      <td style={{ fontSize: '0.75rem', color: '#666666', fontFamily: 'var(--font-mono)' }}>{item.date}</td>
-                      <td style={{ color: '#333333', fontWeight: '500' }}>{item.summary}</td>
-                      <td style={{ textAlign: 'center' }}>
-                        <button
-                          onClick={() => handleDeleteHistory(item.id)}
-                          style={styles.deleteBtn}
-                          title="기록 삭제"
-                        >
-                          <Trash2 size={15} color="#ef4444" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <span className="text-[10px] text-zinc-400 font-mono flex items-center gap-1">
+                          <Clock size={11} />
+                          {item.date}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-zinc-950 m-0 leading-normal">
+                        {item.summary}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Actions */}
+                  <div className="flex items-center gap-2 self-end md:self-auto shrink-0 border-t border-zinc-50 pt-3 md:border-0 md:pt-0">
+                    <button
+                      onClick={() => {
+                        alert(`해당 분석 레포트는 분석 결과 탭 또는 대시보드 페이지에서 상세하게 확인하실 수 있습니다.`);
+                      }}
+                      className="btn btn-secondary py-1.5 px-3 text-xs inline-flex items-center gap-1"
+                    >
+                      상세 보기 <ArrowRight size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteHistory(item.id)}
+                      className="bg-transparent border-0 cursor-pointer p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors duration-150 inline-flex items-center justify-center"
+                      title="기록 삭제"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <div style={styles.noHistory}>
-              <AlertCircle size={28} color="#888888" />
-              <h4>저장된 분석 기록이 없습니다.</h4>
-              <p>GitHub 분석이나 Gap 분석을 진행하여 레포트를 생성해보세요.</p>
+            <div className="flex flex-col items-center py-16 px-8 bg-white rounded-xl border border-zinc-200 text-center gap-1.5 shadow-xs">
+              <AlertCircle size={28} className="text-zinc-400" />
+              <h4 className="text-sm font-semibold text-zinc-900 m-0">저장된 분석 기록이 없습니다.</h4>
+              <p className="text-xs text-zinc-500 m-0">GitHub 분석이나 Gap 분석을 진행하여 레포트를 생성해보세요.</p>
             </div>
           )}
         </div>
@@ -287,117 +321,3 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    paddingBottom: '3rem',
-  },
-  tabContainer: {
-    display: 'flex',
-    gap: '0.25rem',
-    borderBottom: '1px solid #eaeaea',
-    paddingBottom: '0.5rem',
-    marginBottom: '1.5rem',
-  },
-  tabBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.375rem',
-    background: 'none',
-    border: 'none',
-    padding: '0.5rem 0.875rem',
-    fontSize: '0.825rem',
-    fontWeight: '500',
-    color: '#666666',
-    cursor: 'pointer',
-    borderRadius: '6px',
-    transition: 'all 0.12s ease',
-  },
-  tabBtnActive: {
-    backgroundColor: '#f5f5f5',
-    color: '#111111',
-    fontWeight: '600',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    border: '1px solid #eaeaea',
-    borderRadius: '8px',
-    padding: '1.25rem 1.5rem',
-  },
-  cardHeaderTitle: {
-    fontSize: '1rem',
-    fontWeight: '700',
-    margin: '0 0 0.125rem 0',
-  },
-  cardHeaderDesc: {
-    fontSize: '0.75rem',
-    color: '#666666',
-    marginBottom: '1.25rem',
-  },
-  githubBox: {
-    display: 'flex',
-    alignItems: 'center',
-    border: '1px solid #eaeaea',
-    borderRadius: '6px',
-    padding: '0.15rem 0.5rem',
-    backgroundColor: '#ffffff',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem',
-  },
-  saveWrapper: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-  },
-  saveBtn: {
-    padding: '0.5rem 1.25rem',
-  },
-  deleteBtn: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '4px',
-    borderRadius: '4px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ':hover': {
-      backgroundColor: '#fef2f2',
-    }
-  },
-  noHistory: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '4rem 2rem',
-    backgroundColor: '#ffffff',
-    borderRadius: '8px',
-    border: '1px solid #eaeaea',
-    textAlign: 'center',
-    gap: '0.375rem',
-  },
-  errorContainer: {
-    backgroundColor: '#fef2f2',
-    border: '1px solid #fca5a5',
-    color: '#b91c1c',
-    padding: '0.625rem 0.875rem',
-    borderRadius: '6px',
-    marginBottom: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontSize: '0.825rem',
-  },
-  successContainer: {
-    backgroundColor: '#ecfdf5',
-    border: '1px solid #a7f3d0',
-    color: '#065f46',
-    padding: '0.625rem 0.875rem',
-    borderRadius: '6px',
-    marginBottom: '1rem',
-    fontSize: '0.825rem',
-    fontWeight: '600',
-  }
-};

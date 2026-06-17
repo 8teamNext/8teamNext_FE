@@ -95,131 +95,55 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
   };
 
   return (
-    <div style={styles.container}>
+    <div className="w-full mb-4">
       <div
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
         onClick={triggerInput}
-        style={{
-          ...styles.dropZone,
-          ...(isDragActive ? styles.dropZoneActive : {}),
-          ...(fileInfo ? styles.dropZoneSuccess : {}),
-        }}
+        className={`border border-dashed rounded-lg p-8 text-center cursor-pointer transition duration-150 flex flex-col items-center justify-center ${
+          isDragActive 
+            ? 'border-black bg-zinc-50' 
+            : fileInfo 
+              ? 'border-emerald-500 bg-emerald-50/50' 
+              : 'border-zinc-200 bg-white hover:border-zinc-300'
+        }`}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept={accept}
           onChange={handleChange}
-          style={styles.hiddenInput}
+          className="hidden"
         />
         
         {fileInfo ? (
-          <div style={styles.content}>
-            <CheckCircle2 size={32} color="#10b981" />
-            <h4 style={styles.successTitle}>파일 업로드 완료!</h4>
-            <div style={styles.fileDetails}>
-              <FileText size={14} color="#666666" />
+          <div className="flex flex-col items-center gap-1.5">
+            <CheckCircle2 size={32} className="text-emerald-500" />
+            <h4 className="text-emerald-800 font-semibold text-sm m-0">파일 업로드 완료!</h4>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-900 bg-white py-1 px-2.5 rounded border border-zinc-200 font-mono">
+              <FileText size={14} className="text-zinc-500" />
               <span>{fileInfo.name} ({fileInfo.size})</span>
             </div>
-            <p style={styles.subtext}>클릭하여 다른 파일로 변경할 수 있습니다.</p>
+            <p className="text-xs text-zinc-500 m-0">클릭하여 다른 파일로 변경할 수 있습니다.</p>
           </div>
         ) : (
-          <div style={styles.content}>
-            <Upload size={32} color="#888888" />
-            <h4 style={styles.title}>{placeholderText || '파일 업로드'}</h4>
-            <p style={styles.subtext}>드래그 앤 드롭하거나 클릭하여 파일을 선택하세요.</p>
-            <span style={styles.formatTip}>지원 형식: PDF, TXT, MD (PDF는 자동 텍스트 추출 분석)</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <Upload size={32} className="text-zinc-400" />
+            <h4 className="text-sm font-semibold text-zinc-900 m-0">{placeholderText || '파일 업로드'}</h4>
+            <p className="text-xs text-zinc-500 m-0">드래그 앤 드롭하거나 클릭하여 파일을 선택하세요.</p>
+            <span className="text-[10px] text-zinc-400">지원 형식: PDF, TXT, MD (PDF는 자동 텍스트 추출 분석)</span>
           </div>
         )}
       </div>
 
       {error && (
-        <div style={styles.errorContainer}>
-          <AlertCircle size={14} color="#ef4444" />
+        <div className="flex items-center gap-1.5 mt-2 text-red-500 text-xs">
+          <AlertCircle size={14} className="text-red-500" />
           <span>{error}</span>
         </div>
       )}
     </div>
   );
 }
-
-const styles = {
-  container: {
-    width: '100%',
-    marginBottom: '1rem',
-  },
-  dropZone: {
-    border: '1px dashed #eaeaea',
-    borderRadius: '8px',
-    padding: '2rem 1.5rem',
-    textAlign: 'center',
-    backgroundColor: '#ffffff',
-    cursor: 'pointer',
-    transition: 'all 0.12s ease',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dropZoneActive: {
-    borderColor: '#000000',
-    backgroundColor: '#fafafa',
-  },
-  dropZoneSuccess: {
-    borderColor: '#10b981',
-    backgroundColor: '#f0fdf4',
-  },
-  hiddenInput: {
-    display: 'none',
-  },
-  content: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.375rem',
-  },
-  title: {
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: '#111111',
-    margin: 0,
-  },
-  successTitle: {
-    color: '#065f46',
-    fontWeight: '600',
-    fontSize: '0.9rem',
-    margin: 0,
-  },
-  fileDetails: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.375rem',
-    fontSize: '0.8rem',
-    color: '#111111',
-    backgroundColor: '#ffffff',
-    padding: '0.2rem 0.625rem',
-    borderRadius: '4px',
-    border: '1px solid #eaeaea',
-    fontFamily: 'var(--font-mono)',
-  },
-  subtext: {
-    fontSize: '0.8rem',
-    color: '#666666',
-    margin: 0,
-  },
-  formatTip: {
-    fontSize: '0.725rem',
-    color: '#888888',
-  },
-  errorContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.375rem',
-    marginTop: '0.5rem',
-    color: '#ef4444',
-    fontSize: '0.8rem',
-  }
-};

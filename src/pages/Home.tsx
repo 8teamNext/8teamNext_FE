@@ -57,51 +57,51 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
   ];
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col gap-14 pb-12">
       {/* Perplexity-inspired Hero Section */}
-      <section style={styles.hero}>
-        <div style={styles.heroContent}>
-          <div style={styles.heroTag}>
-            <Sparkles size={12} color="#111111" style={{ marginRight: '4px' }} />
+      <section className="bg-white rounded-xl border border-zinc-200 py-20 px-10 text-center bg-[radial-gradient(at_top,_#fafafa_0%,_#ffffff_80%)] flex flex-col items-center">
+        <div className="max-w-3xl w-full mx-auto flex flex-col items-center">
+          <div className="inline-flex items-center bg-zinc-50 text-zinc-900 px-3 py-1 rounded-md text-[10px] font-semibold mb-6 border border-zinc-200 font-mono tracking-wider uppercase">
+            <Sparkles size={12} className="text-zinc-900 mr-1" />
             <span>AI-Powered Career Intelligence</span>
           </div>
-          <h1 style={styles.heroTitle}>
+          <h1 className="text-4xl font-extrabold text-zinc-900 leading-tight mb-4 tracking-tight">
             개발자 취업 합격 확률을 높이는<br />
-            당신만을 위한 <span style={styles.highlight}>AI 커리어 코파일럿</span>
+            당신만을 위한 <span className="text-blue-600">AI 커리어 코파일럿</span>
           </h1>
-          <p style={styles.heroSub}>
+          <p className="text-sm text-zinc-500 leading-relaxed mb-10 max-w-xl">
             이력서 검증, 포트폴리오 분석, 역량 Gap 보완 프로젝트 추천까지.<br />
             취업 성공률을 높일 구체적인 기술 스택 보완 액션 플랜을 제공합니다.
           </p>
 
           {/* Perplexity style search prompt bar */}
-          <form onSubmit={handleQuerySubmit} style={styles.searchBarContainer}>
-            <div style={styles.searchIconBox}>
-              <Search size={16} color="#888888" />
+          <form onSubmit={handleQuerySubmit} className="w-full max-w-2xl flex items-center bg-white border border-zinc-200 rounded-lg p-1.5 shadow-sm focus-within:border-black transition duration-150 mb-5">
+            <div className="pl-3 flex items-center justify-center">
+              <Search size={16} className="text-zinc-400" />
             </div>
             <input
               type="text"
               placeholder="무엇이든 물어보세요 (예: 내 깃허브 저장소를 분석해서 우대기술 스택과 비교해줘)"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              style={styles.searchInput}
+              className="flex-grow border-0 outline-none text-sm text-zinc-900 py-2 px-3 bg-transparent"
             />
-            <button type="submit" style={styles.searchSubmitBtn}>
-              <Sparkles size={14} color="#ffffff" style={{ marginRight: '4px' }} />
+            <button type="submit" className="bg-black text-white border-0 py-2 px-4 rounded-md text-xs font-semibold cursor-pointer flex items-center hover:bg-zinc-800 transition duration-150 shrink-0">
+              <Sparkles size={14} className="text-white mr-1" />
               <span>진단 시작</span>
             </button>
           </form>
 
           {/* Quick Suggestions tags */}
-          <div style={styles.suggestionsWrapper}>
-            <span style={styles.suggestLabel}>추천 진단 바로가기:</span>
-            <button onClick={() => handleSuggestionClick('analysis')} style={styles.suggestTag}>
+          <div className="flex items-center justify-center flex-wrap gap-2 mt-2">
+            <span className="text-xs text-zinc-400 mr-1 font-medium">추천 진단 바로가기:</span>
+            <button onClick={() => handleSuggestionClick('analysis')} className="bg-white border border-zinc-200 py-1.5 px-3 rounded-md text-xs text-zinc-500 font-medium cursor-pointer hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 transition duration-150">
               📊 종합 AI 커리어 리포트 시작
             </button>
-            <button onClick={() => handleSuggestionClick('interview')} style={styles.suggestTag}>
+            <button onClick={() => handleSuggestionClick('interview')} className="bg-white border border-zinc-200 py-1.5 px-3 rounded-md text-xs text-zinc-500 font-medium cursor-pointer hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 transition duration-150">
               💬 AI 모의 면접
             </button>
-            <button onClick={() => handleSuggestionClick('dashboard')} style={styles.suggestTag}>
+            <button onClick={() => handleSuggestionClick('dashboard')} className="bg-white border border-zinc-200 py-1.5 px-3 rounded-md text-xs text-zinc-500 font-medium cursor-pointer hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 transition duration-150">
               📈 대시보드 로그 확인
             </button>
           </div>
@@ -109,28 +109,28 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
       </section>
 
       {/* Quick Launch Services Grid */}
-      <section style={styles.featuresSection}>
-        <div style={styles.sectionHeader}>
-          <h2>핵심 진단 도구</h2>
-          <p>분석받고자 하는 진단을 선택해 취업 경쟁력을 높여보세요.</p>
+      <section className="flex flex-col gap-6">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-zinc-900 mb-1.5">핵심 진단 도구</h2>
+          <p className="text-xs text-zinc-500 m-0">분석받고자 하는 진단을 선택해 취업 경쟁력을 높여보세요.</p>
         </div>
         
-        <div className="grid grid-3" style={styles.featuresGrid}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {features.map((feat, idx) => {
             const Icon = feat.icon;
             return (
-              <div key={idx} style={styles.featureCardWrapper} onClick={() => setCurrentPage(feat.id)}>
+              <div key={idx} className="cursor-pointer group" onClick={() => setCurrentPage(feat.id)}>
                 <Card 
                   title={feat.title} 
                   icon={Icon} 
                   badgeText={feat.badge}
                   badgeType="info"
-                  style={styles.featureCard}
+                  className="group-hover:border-zinc-300 group-hover:shadow-md transition duration-150"
                 >
-                  <p style={styles.featureDesc}>{feat.desc}</p>
-                  <div style={styles.cardFooter}>
-                    <span style={styles.footerLink}>시작하기</span>
-                    <ArrowRight size={12} className="arrow-icon" style={styles.arrowIcon} />
+                  <p className="text-xs text-zinc-500 leading-relaxed flex-grow m-0">{feat.desc}</p>
+                  <div className="flex items-center justify-end gap-1 mt-4 pt-2.5 border-t border-zinc-100">
+                    <span className="text-xs font-semibold text-blue-600">시작하기</span>
+                    <ArrowRight size={12} className="text-blue-600 group-hover:translate-x-0.5 transition duration-150" />
                   </div>
                 </Card>
               </div>
@@ -140,254 +140,28 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
       </section>
 
       {/* Step Guide Section */}
-      <section style={styles.guideSection}>
-        <h2 style={styles.guideTitle}>효율적인 취업 준비 플로우</h2>
-        <div style={styles.steps}>
-          <div style={styles.step}>
-            <div style={styles.stepNum}>1</div>
-            <h4>GitHub & 채용공고 분석</h4>
-            <p>분석할 깃허브 저장소와 가고 싶은 기업의 채용 정보 링크를 넣습니다.</p>
+      <section className="bg-white rounded-xl py-12 px-8 text-center border border-zinc-200">
+        <h2 className="mb-8 text-lg font-bold text-zinc-900">효율적인 취업 준비 플로우</h2>
+        <div className="flex items-center justify-between max-w-4xl mx-auto flex-wrap gap-6">
+          <div className="flex-1 min-w-[200px] flex flex-col items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-zinc-950 text-white flex items-center justify-center font-bold text-xs font-mono">1</div>
+            <h4 className="text-sm font-semibold text-zinc-900 m-0">GitHub & 채용공고 분석</h4>
+            <p className="text-xs text-zinc-500 m-0">분석할 깃허브 저장소와 가고 싶은 기업의 채용 정보 링크를 넣습니다.</p>
           </div>
-          <div style={styles.stepLine} />
-          <div style={styles.step}>
-            <div style={styles.stepNum}>2</div>
-            <h4>기술 Gap & 이력서 검증</h4>
-            <p>이력서 내용과 실제 깃허브 코드 내역을 대조하여 부족 스택과 보완점을 진단합니다.</p>
+          <div className="w-10 h-px bg-zinc-200 shrink-0 md:block hidden" />
+          <div className="flex-1 min-w-[200px] flex flex-col items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-zinc-950 text-white flex items-center justify-center font-bold text-xs font-mono">2</div>
+            <h4 className="text-sm font-semibold text-zinc-900 m-0">기술 Gap & 이력서 검증</h4>
+            <p className="text-xs text-zinc-500 m-0">이력서 내용과 실제 깃허브 코드 내역을 대조하여 부족 스택과 보완점을 진단합니다.</p>
           </div>
-          <div style={styles.stepLine} />
-          <div style={styles.step}>
-            <div style={styles.stepNum}>3</div>
-            <h4>맞춤형 프로젝트 보완</h4>
-            <p>도출된 부족 스택(예: Docker, AWS)을 확보할 수 있는 구체적 빌드업 프로젝트를 진행합니다.</p>
+          <div className="w-10 h-px bg-zinc-200 shrink-0 md:block hidden" />
+          <div className="flex-1 min-w-[200px] flex flex-col items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-zinc-950 text-white flex items-center justify-center font-bold text-xs font-mono">3</div>
+            <h4 className="text-sm font-semibold text-zinc-900 m-0">맞춤형 프로젝트 보완</h4>
+            <p className="text-xs text-zinc-500 m-0">도출된 부족 스택(예: Docker, AWS)을 확보할 수 있는 구체적 빌드업 프로젝트를 진행합니다.</p>
           </div>
         </div>
       </section>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '3.5rem',
-    paddingBottom: '3rem',
-  },
-  hero: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    border: '1px solid #eaeaea',
-    padding: '5rem 2.5rem',
-    textAlign: 'center',
-    backgroundImage: 'radial-gradient(at top, #fafafa 0%, #ffffff 80%)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  heroContent: {
-    maxWidth: '840px',
-    width: '100%',
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  heroTag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-    color: '#111111',
-    padding: '0.3rem 0.75rem',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    fontWeight: '600',
-    marginBottom: '1.5rem',
-    border: '1px solid #eaeaea',
-    fontFamily: 'var(--font-mono)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  heroTitle: {
-    fontSize: '2.5rem',
-    fontWeight: '800',
-    color: '#111111',
-    lineHeight: '1.25',
-    marginBottom: '1rem',
-    letterSpacing: '-0.03em',
-  },
-  highlight: {
-    color: '#0070f3',
-  },
-  heroSub: {
-    fontSize: '0.95rem',
-    color: '#666666',
-    lineHeight: '1.6',
-    marginBottom: '2.5rem',
-    maxWidth: '620px',
-  },
-  searchBarContainer: {
-    width: '100%',
-    maxWidth: '680px',
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    border: '1px solid #eaeaea',
-    borderRadius: '10px',
-    padding: '0.375rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-    position: 'relative',
-    transition: 'border-color 0.15s ease',
-    marginBottom: '1.25rem',
-    ':focus-within': {
-      borderColor: '#000000',
-    }
-  },
-  searchIconBox: {
-    paddingLeft: '0.75rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchInput: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    fontFamily: 'var(--font-sans)',
-    fontSize: '0.9rem',
-    color: '#111111',
-    padding: '0.5rem 0.75rem',
-  },
-  searchSubmitBtn: {
-    backgroundColor: '#000000',
-    color: '#ffffff',
-    border: 'none',
-    padding: '0.5rem 1rem',
-    borderRadius: '6px',
-    fontSize: '0.825rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    transition: 'background 0.12s ease',
-    ':hover': {
-      backgroundColor: '#333333',
-    }
-  },
-  suggestionsWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-    marginTop: '0.5rem',
-  },
-  suggestLabel: {
-    fontSize: '0.75rem',
-    color: '#888888',
-    marginRight: '0.25rem',
-    fontWeight: '500',
-  },
-  suggestTag: {
-    background: '#ffffff',
-    border: '1px solid #eaeaea',
-    padding: '0.25rem 0.625rem',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    color: '#666666',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.12s ease',
-    ':hover': {
-      backgroundColor: '#fafafa',
-      borderColor: '#d3d3d3',
-      color: '#111111',
-    }
-  },
-  featuresSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem',
-  },
-  sectionHeader: {
-    textAlign: 'center',
-  },
-  featuresGrid: {
-    rowGap: '1.25rem',
-  },
-  featureCardWrapper: {
-    cursor: 'pointer',
-  },
-  featureCard: {
-    transition: 'all 0.15s ease',
-  },
-  featureDesc: {
-    fontSize: '0.85rem',
-    color: '#666666',
-    lineHeight: '1.5',
-    flex: 1,
-  },
-  cardFooter: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: '0.25rem',
-    marginTop: '1rem',
-    paddingTop: '0.625rem',
-    borderTop: '1px solid #fafafa',
-  },
-  footerLink: {
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    color: '#0070f3',
-  },
-  arrowIcon: {
-    color: '#0070f3',
-  },
-  guideSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '3rem 2rem',
-    textAlign: 'center',
-    border: '1px solid #eaeaea',
-  },
-  guideTitle: {
-    marginBottom: '2rem',
-    fontSize: '1.35rem',
-  },
-  steps: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    maxWidth: '960px',
-    margin: '0 auto',
-    flexWrap: 'wrap',
-    gap: '1.5rem',
-  },
-  step: {
-    flex: 1,
-    minWidth: '200px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.5rem',
-  },
-  stepNum: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    backgroundColor: '#111111',
-    color: '#ffffff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-    fontSize: '0.85rem',
-    fontFamily: 'var(--font-mono)',
-  },
-  stepLine: {
-    width: '40px',
-    height: '1px',
-    backgroundColor: '#eaeaea',
-    flexShrink: 0,
-  }
-};

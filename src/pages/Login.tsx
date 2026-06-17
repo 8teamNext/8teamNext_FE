@@ -56,76 +56,73 @@ export default function Login({ setCurrentPage, onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.loginBox}>
-        <Card style={styles.loginCard}>
-          <div style={styles.cardHeader}>
-            <div style={styles.logoIcon}>
-              <Sparkles size={18} color="#ffffff" />
+    <div className="flex items-center justify-center py-12">
+      <div className="max-w-[400px] w-full">
+        <Card className="p-8">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="bg-black w-9 h-9 rounded-lg flex items-center justify-center mb-3">
+              <Sparkles size={18} className="text-white" />
             </div>
-            <h2 style={styles.title}>AI Career Copilot</h2>
-            <p style={styles.subtitle}>계정에 로그인하여 상세 분석 보고서를 관리해보세요.</p>
+            <h2 className="text-xl font-bold text-zinc-900 m-0 mb-1.5">AI Career Copilot</h2>
+            <p className="text-xs text-zinc-500 m-0">계정에 로그인하여 상세 분석 보고서를 관리해보세요.</p>
           </div>
 
           {error && (
-            <div style={styles.errorBanner}>
-              <AlertCircle size={15} color="#ef4444" />
+            <div className="bg-red-50 border border-red-200 text-red-800 p-2.5 rounded-md text-xs flex items-center gap-2 mb-5">
+              <AlertCircle size={15} className="text-red-500" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleEmailLogin} style={styles.form}>
-            <div className="form-group">
-              <label className="form-label">이메일 주소</label>
-              <div style={styles.inputWrapper}>
-                <Mail size={15} color="#888888" style={styles.inputIcon} />
+          <form onSubmit={handleEmailLogin} className="w-full">
+            <div className="form-group mb-5">
+              <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">이메일 주소</label>
+              <div className="relative flex items-center">
+                <Mail size={15} className="text-zinc-400 absolute left-3 z-10" />
                 <input
                   type="email"
-                  className="form-input"
+                  className="form-input pl-9"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ paddingLeft: '2.25rem' }}
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">비밀번호</label>
-              <div style={styles.inputWrapper}>
-                <Lock size={15} color="#888888" style={styles.inputIcon} />
+            <div className="form-group mb-5">
+              <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">비밀번호</label>
+              <div className="relative flex items-center">
+                <Lock size={15} className="text-zinc-400 absolute left-3 z-10" />
                 <input
                   type="password"
-                  className="form-input"
+                  className="form-input pl-9"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ paddingLeft: '2.25rem' }}
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary w-full py-2.5 text-sm mt-2"
               disabled={loading}
-              style={styles.submitBtn}
             >
               {loading ? '로그인 중...' : '이메일로 로그인'}
             </button>
           </form>
 
-          <div style={styles.dividerContainer}>
-            <div style={styles.dividerLine} />
-            <span style={styles.dividerText}>또는 소셜 로그인</span>
-            <div style={styles.dividerLine} />
+          <div className="flex items-center justify-center my-5 w-full">
+            <div className="flex-1 h-px bg-zinc-200" />
+            <span className="px-2.5 text-[10px] text-zinc-400 font-medium whitespace-nowrap">또는 소셜 로그인</span>
+            <div className="flex-1 h-px bg-zinc-200" />
           </div>
 
-          <div style={styles.socialGroup}>
+          <div className="flex flex-col gap-2.5 w-full">
             <button
               onClick={() => handleSocialLogin('Kakao')}
               disabled={loading}
-              style={{ ...styles.socialBtn, ...styles.kakaoBtn }}
+              className="w-full py-2.5 border-0 rounded-md font-semibold text-xs cursor-pointer flex items-center justify-center transition duration-150 bg-[#FEE500] text-[#191919]"
             >
               <span>카카오로 로그인</span>
             </button>
@@ -133,7 +130,7 @@ export default function Login({ setCurrentPage, onLoginSuccess }: LoginProps) {
             <button
               onClick={() => handleSocialLogin('Google')}
               disabled={loading}
-              style={{ ...styles.socialBtn, ...styles.googleBtn }}
+              className="w-full py-2.5 border border-zinc-200 rounded-md font-semibold text-xs cursor-pointer flex items-center justify-center transition duration-150 bg-white text-zinc-900 hover:bg-zinc-50"
             >
               <span>Google 계정으로 로그인</span>
             </button>
@@ -143,125 +140,3 @@ export default function Login({ setCurrentPage, onLoginSuccess }: LoginProps) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '3rem 0',
-  },
-  loginBox: {
-    maxWidth: '400px',
-    width: '100%',
-  },
-  loginCard: {
-    padding: '2.5rem 2rem',
-  },
-  cardHeader: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    marginBottom: '2rem',
-  },
-  logoIcon: {
-    backgroundColor: '#000000',
-    width: '36px',
-    height: '36px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: '0.75rem',
-  },
-  title: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#111111',
-    margin: '0 0 0.375rem 0',
-  },
-  subtitle: {
-    fontSize: '0.825rem',
-    color: '#666666',
-    margin: 0,
-  },
-  errorBanner: {
-    backgroundColor: '#fef2f2',
-    border: '1px solid #fca5a5',
-    color: '#991b1b',
-    padding: '0.625rem 0.875rem',
-    borderRadius: '6px',
-    fontSize: '0.8rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    marginBottom: '1.25rem',
-  },
-  form: {
-    width: '100%',
-  },
-  inputWrapper: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: '0.75rem',
-    zIndex: 10,
-  },
-  submitBtn: {
-    width: '100%',
-    padding: '0.625rem',
-    fontSize: '0.875rem',
-    marginTop: '0.5rem',
-  },
-  dividerContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '1.25rem 0',
-    width: '100%',
-  },
-  dividerLine: {
-    flex: 1,
-    height: '1px',
-    backgroundColor: '#eaeaea',
-  },
-  dividerText: {
-    padding: '0 0.625rem',
-    fontSize: '0.725rem',
-    color: '#888888',
-    fontWeight: '500',
-    whiteSpace: 'nowrap',
-  },
-  socialGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.625rem',
-    width: '100%',
-  },
-  socialBtn: {
-    width: '100%',
-    padding: '0.625rem',
-    border: '1px solid #eaeaea',
-    borderRadius: '6px',
-    fontWeight: '600',
-    fontSize: '0.825rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.12s ease',
-  },
-  kakaoBtn: {
-    backgroundColor: '#FEE500',
-    borderColor: '#FEE500',
-    color: '#191919',
-  },
-  googleBtn: {
-    backgroundColor: '#ffffff',
-    color: '#111111',
-  }
-};

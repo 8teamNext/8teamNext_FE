@@ -2,12 +2,12 @@ import React from 'react';
 
 interface CardProps {
   title?: string;
-  icon?: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties }>;
+  icon?: React.ComponentType<{ size?: number; className?: string }>;
   badgeText?: string;
   badgeType?: 'info' | 'success' | 'warning' | 'danger';
   extraAction?: React.ReactNode;
   children?: React.ReactNode;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
 export default function Card({ 
@@ -17,69 +17,32 @@ export default function Card({
   badgeType = 'info', 
   extraAction, 
   children, 
-  style = {} 
+  className = ''
 }: CardProps) {
   const getBadgeClass = () => {
     switch (badgeType) {
-      case 'success': return 'badge badge-success';
-      case 'warning': return 'badge badge-warning';
-      case 'danger': return 'badge badge-danger';
-      default: return 'badge badge-info';
+      case 'success': return 'badge-success';
+      case 'warning': return 'badge-warning';
+      case 'danger': return 'badge-danger';
+      default: return 'badge-info';
     }
   };
 
   return (
-    <div className="card" style={{ ...styles.card, ...style }}>
+    <div className={`card flex flex-col h-full ${className}`}>
       {(title || Icon || badgeText || extraAction) && (
-        <div style={styles.cardHeader}>
-          <div style={styles.headerLeft}>
-            {Icon && <Icon size={16} color="#111111" style={{ marginRight: '4px' }} />}
-            {title && <h3 style={styles.title}>{title}</h3>}
-            {badgeText && <span className={getBadgeClass()}>{badgeText}</span>}
+        <div className="flex justify-between items-center mb-4 border-b border-zinc-200 pb-2.5">
+          <div className="flex items-center flex-wrap gap-1.5">
+            {Icon && <Icon size={16} className="text-zinc-900 mr-1" />}
+            {title && <h3 className="m-0 text-sm font-semibold text-zinc-900">{title}</h3>}
+            {badgeText && <span className={`badge ${getBadgeClass()}`}>{badgeText}</span>}
           </div>
-          {extraAction && <div style={styles.headerRight}>{extraAction}</div>}
+          {extraAction && <div className="flex items-center">{extraAction}</div>}
         </div>
       )}
-      <div style={styles.cardContent}>
+      <div className="flex-1 flex flex-col">
         {children}
       </div>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
-    borderBottom: '1px solid #eaeaea',
-    paddingBottom: '0.625rem',
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '0.375rem',
-  },
-  title: {
-    margin: 0,
-    fontSize: '0.925rem',
-    fontWeight: '600',
-    color: '#111111',
-  },
-  headerRight: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  cardContent: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-  }
-};

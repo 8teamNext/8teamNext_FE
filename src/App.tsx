@@ -58,7 +58,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="flex flex-col min-h-screen">
       <Navigation 
         currentPage={currentPage} 
         setCurrentPage={setCurrentPage} 
@@ -66,59 +66,22 @@ export default function App() {
         onLogout={handleLogout} 
       />
       
-      <main className="main-content">
+      <main className="flex-1 max-w-[1160px] w-full mx-auto px-6 py-12">
         {renderPage()}
       </main>
 
-      <footer style={styles.footer}>
-        <div style={styles.footerContainer}>
-          <p style={styles.footerText}>
+      <footer className="bg-white border-t border-zinc-200 py-5 mt-auto">
+        <div className="max-w-[1160px] w-full mx-auto px-6 flex justify-between items-center flex-wrap gap-4">
+          <p className="text-xs text-zinc-500 m-0">
             © 2026 AI Career Copilot. All rights reserved.
           </p>
-          <div style={styles.footerLinks}>
-            <a href="#privacy" style={styles.link}>개인정보처리방침</a>
-            <a href="#terms" style={styles.link}>이용약관</a>
-            <a href="#support" style={styles.link}>고객지원</a>
+          <div className="flex gap-5">
+            <a href="#privacy" className="text-xs text-zinc-500 hover:text-zinc-900 transition duration-150">개인정보처리방침</a>
+            <a href="#terms" className="text-xs text-zinc-500 hover:text-zinc-900 transition duration-150">이용약관</a>
+            <a href="#support" className="text-xs text-zinc-500 hover:text-zinc-900 transition duration-150">고객지원</a>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
-const styles = {
-  footer: {
-    backgroundColor: '#ffffff',
-    borderTop: '1px solid #eaeaea',
-    padding: '1.25rem 0',
-    marginTop: 'auto',
-  },
-  footerContainer: {
-    maxWidth: '1160px',
-    width: '100%',
-    margin: '0 auto',
-    padding: '0 1.5rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '1rem',
-  },
-  footerText: {
-    fontSize: '0.8rem',
-    color: '#888888',
-    margin: 0,
-  },
-  footerLinks: {
-    display: 'flex',
-    gap: '1.25rem',
-  },
-  link: {
-    fontSize: '0.8rem',
-    color: '#888888',
-    transition: 'color 0.12s ease',
-    ':hover': {
-      color: '#111111',
-    }
-  }
-};
