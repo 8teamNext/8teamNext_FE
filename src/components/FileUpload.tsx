@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 interface FileUploadProps {
   accept?: string;
@@ -17,6 +17,7 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
   const [isDragActive, setIsDragActive] = useState(false);
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
@@ -33,7 +34,13 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
     if (!file) return;
 
     const extension = file.name.split('.').pop()?.toLowerCase();
-    
+
+    if (!['pdf', 'txt', 'md'].includes(extension ?? '')) {
+      setError('파일 양식을 확인해주세요. (지원 형식: PDF, TXT, MD)');
+      setFileInfo(null);
+      return;
+    }
+
     setFileInfo({
       name: file.name,
       size: (file.size / 1024).toFixed(1) + ' KB',
@@ -41,23 +48,30 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
     });
     setError(null);
 
-    // If it's a PDF, we mock the extraction with realistic text or load a standard resume
+    // PDF는 백엔드에서 텍스트 추출
     if (extension === 'pdf') {
-      setTimeout(() => {
-        const mockPdfText = `[PDF 이력서 추출본 - ${file.name}]
-이름: 김코딩
-기술 스택: Java, Spring Boot, JPA, Querydsl, MySQL, Redis, AWS ECS, Docker, Git
-
-[경력 및 프로젝트]
-- 대형 커뮤니티 사이트 백엔드 성능 개선 프로젝트
-  - Spring Data JPA N+1 문제 페치 조인으로 해결하여 DB 조회 쿼리 60% 절감
-  - Redis 캐시 적용을 통해 인기 피드 조회 API 성능 2.5배 개선
-- CI/CD 자동화 배포 파이프라인 구축
-  - Docker 컨테이너 멀티 스테이지 빌드로 이미지 사이즈 300MB 축소
-  - GitHub Actions를 사용해 AWS ECS ECS 배포 워크플로우 자동화
-`;
-        onTextLoaded(mockPdfText, file.name);
-      }, 500);
+      setExtracting(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      fetch('http://localhost:8000/api/parse-resume', {
+        method: 'POST',
+        body: formData,
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'PDF 추출 실패');
+          }
+          return res.json();
+        })
+        .then((data) => {
+          onTextLoaded(data.text, file.name);
+        })
+        .catch((err) => {
+          setError(err.message || 'PDF 텍스트 추출 중 오류가 발생했습니다.');
+          setFileInfo(null);
+        })
+        .finally(() => setExtracting(false));
       return;
     }
 
@@ -118,7 +132,13 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
           className="hidden"
         />
         
-        {fileInfo ? (
+        {extracting ? (
+          <div className="flex flex-col items-center gap-1.5">
+            <Loader2 size={32} className="text-blue-500 animate-spin" />
+            <h4 className="text-zinc-800 font-semibold text-sm m-0">PDF 텍스트 추출 중...</h4>
+            <p className="text-xs text-zinc-500 m-0">잠시만 기다려주세요.</p>
+          </div>
+        ) : fileInfo ? (
           <div className="flex flex-col items-center gap-1.5">
             <CheckCircle2 size={32} className="text-emerald-500" />
             <h4 className="text-emerald-800 font-semibold text-sm m-0">파일 업로드 완료!</h4>
