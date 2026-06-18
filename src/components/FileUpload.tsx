@@ -120,7 +120,7 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
           isDragActive 
             ? 'border-black bg-zinc-50' 
             : fileInfo 
-              ? 'border-emerald-500 bg-emerald-50/50' 
+              ? 'border-green-500 bg-green-50/50'
               : 'border-zinc-200 bg-white hover:border-zinc-300'
         }`}
       >
@@ -134,14 +134,14 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
         
         {extracting ? (
           <div className="flex flex-col items-center gap-1.5">
-            <Loader2 size={32} className="text-blue-500 animate-spin" />
+            <Loader2 size={32} className="text-green-500 animate-spin" />
             <h4 className="text-zinc-800 font-semibold text-sm m-0">PDF 텍스트 추출 중...</h4>
             <p className="text-xs text-zinc-500 m-0">잠시만 기다려주세요.</p>
           </div>
         ) : fileInfo ? (
           <div className="flex flex-col items-center gap-1.5">
-            <CheckCircle2 size={32} className="text-emerald-500" />
-            <h4 className="text-emerald-800 font-semibold text-sm m-0">파일 업로드 완료!</h4>
+            <CheckCircle2 size={32} className="text-green-500" />
+            <h4 className="text-green-800 font-semibold text-sm m-0">파일 업로드 완료!</h4>
             <div className="flex items-center gap-1.5 text-xs text-zinc-900 bg-white py-1 px-2.5 rounded border border-zinc-200 font-mono">
               <FileText size={14} className="text-zinc-500" />
               <span>{fileInfo.name} ({fileInfo.size})</span>
