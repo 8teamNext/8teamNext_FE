@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { 
-  Sparkles, 
-  Github, 
-  FileText, 
-  AlertTriangle, 
+  Sparkles,
+  Github,
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
   ArrowLeft, 
   BookOpen, 
   TrendingUp, 
@@ -21,6 +22,7 @@ export default function Analysis() {
   // Input states
   const [githubUrl, setGithubUrl] = useState('https://github.com/kimcoding-dev/book-rental-service');
   const [resumeText, setResumeText] = useState('');
+  const [originalResumeText, setOriginalResumeText] = useState('');
   const [jobUrls, setJobUrls] = useState<string[]>(['https://toss.im/career/job-detail/backend-developer']);
   
   // Loading and result states
@@ -29,8 +31,32 @@ export default function Analysis() {
   const [result, setResult] = useState<UnifiedAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = (text: string, fileName: string) => {
+  const [resumeValidation, setResumeValidation] = useState<{ valid: boolean; reason: string } | null>(null);
+  const [validating, setValidating] = useState(false);
+
+  const validateResumeText = async (text: string) => {
+    if (!text.trim()) { setResumeValidation(null); return; }
+    setValidating(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/validate-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      setResumeValidation(data);
+    } catch {
+      setResumeValidation(null);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleFileUpload = (text: string, _fileName: string) => {
     setResumeText(text);
+    setOriginalResumeText(text);
+    setResumeValidation(null); // 이전 검증 결과 초기화 후 새로 시작
+    validateResumeText(text);
   };
 
   const handleAddJobUrl = () => {
@@ -59,6 +85,27 @@ export default function Analysis() {
     }
     if (!resumeText.trim()) {
       setError('이력서 텍스트를 입력하거나 이력서 파일을 업로드해 주세요.');
+      return;
+    }
+
+    // 제출 시점에 항상 최신 텍스트로 검증 (blur 없이 바로 제출하는 경우 대비)
+    setValidating(true);
+    let validation = resumeValidation;
+    try {
+      const res = await fetch('http://localhost:8000/api/validate-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: resumeText }),
+      });
+      validation = await res.json();
+      setResumeValidation(validation);
+    } catch {
+      // 네트워크 오류 시 검증 통과 (서버 문제로 사용자 차단하지 않음)
+    } finally {
+      setValidating(false);
+    }
+    if (validation && !validation.valid) {
+      // 상단 배너 대신 textarea 아래 인라인 경고로만 표시
       return;
     }
 
@@ -511,22 +558,63 @@ export default function Analysis() {
             />
 
             <div className="form-group mt-5">
-              <label className="form-label block text-xs font-medium text-neutral-700 mb-1">이력서 텍스트 직접 입력 / 편집</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="form-label block text-xs font-medium text-neutral-700">이력서 텍스트 직접 입력 / 편집</label>
+                {originalResumeText && resumeText !== originalResumeText && (
+                  <button
+                    type="button"
+                    onClick={() => setResumeText(originalResumeText)}
+                    className="text-[11px] text-blue-500 hover:text-blue-700 underline"
+                  >
+                    원본으로 초기화
+                  </button>
+                )}
+              </div>
               <textarea
-                className="form-textarea min-h-[180px] text-xs! leading-relaxed"
+                className={`form-textarea min-h-[180px] text-xs! leading-relaxed ${
+                  resumeValidation && !resumeValidation.valid
+                    ? 'border-red-400 focus:border-red-500'
+                    : resumeValidation?.valid
+                    ? 'border-emerald-400'
+                    : ''
+                }`}
                 placeholder="이력서 파일 업로드 시 텍스트가 자동으로 채워집니다. 직접 작성하시거나 수정하셔도 좋습니다..."
                 value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
+                onChange={(e) => { setResumeText(e.target.value); setResumeValidation(null); }}
+                onBlur={(e) => { if (e.target.value.trim()) validateResumeText(e.target.value); }}
                 required
               />
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[11px] text-neutral-400">{resumeText.length}자</span>
+              </div>
+              {validating && (
+                <p className="text-[11px] text-neutral-400 mt-1">이력서 내용 확인 중...</p>
+              )}
+              {!validating && resumeValidation && !resumeValidation.valid && (
+                <div className="flex gap-2 bg-red-50 border border-red-100 rounded-lg p-3 text-red-800 text-xs mt-2">
+                  <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                  <span>{resumeValidation.reason}</span>
+                </div>
+              )}
+              {!validating && resumeValidation?.valid && (
+                <div className="flex gap-2 bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-emerald-800 text-xs mt-2">
+                  <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <span>이력서 내용이 확인되었습니다.</span>
+                </div>
+              )}
             </div>
           </div>
 
         </div>
 
         <div className="mt-8 pt-6 border-t border-neutral-200 flex justify-center">
-          <button type="submit" className="btn btn-primary py-3 px-8 text-sm font-semibold rounded-lg w-full max-w-[320px]">
-            <Sparkles size={15} /> AI 커리어 분석 시작하기
+          <button
+            type="submit"
+            disabled={validating || (resumeValidation !== null && !resumeValidation.valid)}
+            className="btn btn-primary py-3 px-8 text-sm font-semibold rounded-lg w-full max-w-[320px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Sparkles size={15} />
+            {validating ? '이력서 내용 확인 중...' : 'AI 커리어 분석 시작하기'}
           </button>
         </div>
       </form>
