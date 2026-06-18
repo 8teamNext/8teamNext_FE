@@ -73,6 +73,7 @@ export interface InterviewQuestion {
   intent: string;
   suggested_keywords: string[];
   sample_answer_tip: string;
+  sample_answer: string;
 }
 
 export interface InterviewGenResponse {
