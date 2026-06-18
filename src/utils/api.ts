@@ -1,4 +1,15 @@
-const BASE_URL = 'http://localhost:8000/api';
+// const BASE_URL = 'http://localhost:8000/api';
+
+import axios from "axios";
+
+const client = axios.create({
+  baseURL: "/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// ── 타입 정의 ──────────────────────────────────────────────────────────────
 
 export interface RepoDetail {
   name: string;
@@ -82,125 +93,135 @@ export interface InterviewGenResponse {
 
 export interface CoverLetterCompareResponse {
   overall_summary: string;
-  improved_expressions: Array<{ original: string; improved: string; reason: string }>;
+  improved_expressions: Array<{
+    original: string;
+    improved: string;
+    reason: string;
+  }>;
   added_experiences: string[];
   strengthened_techs: string[];
   remaining_gaps: string[];
 }
 
-interface RequestOptions extends RequestInit {
-  body?: any;
+// 크롤링 타입
+export interface CrawlSuccess {
+  url_index: number;
+  status: "success";
+  title: string;
+  company: string;
+  job_type: string;
+  tech_stack: string[];
+  tasks: string[];
 }
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const url = `${BASE_URL}${endpoint}`;
-  
-  // Set default headers
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
-
-  const config: RequestInit = {
-    ...options,
-    headers,
-  };
-
-  if (options.body && typeof options.body === 'object') {
-    config.body = JSON.stringify(options.body);
-  }
-
-  try {
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}));
-      throw new Error(errBody.detail || `HTTP error! Status: ${response.status}`);
-    }
-    
-    if (response.status === 204) {
-      return null as unknown as T;
-    }
-    
-    return await response.json() as T;
-  } catch (error) {
-    console.error(`API request failed for ${url}:`, error);
-    throw error;
-  }
+export interface CrawlFailed {
+  url_index: number;
+  status: "failed";
+  error: string;
 }
+
+export type CrawlResult = CrawlSuccess | CrawlFailed;
+
+export interface CrawlResponse {
+  results: CrawlResult[];
+}
+
+// ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
-  // Unified AI Career Analysis
-  analyzeUnified: (githubUrl: string, resumeText: string, jobUrls: string[]): Promise<UnifiedAnalysisResponse> => {
-    return request<UnifiedAnalysisResponse>('/analyze/unified', {
-      method: 'POST',
-      body: { github_url: githubUrl, resume_text: resumeText, job_urls: jobUrls }
-    });
-  },
+  // 채용공고 URL 크롤링
+  crawlJobs: (urls: string[]): Promise<CrawlResponse> =>
+    client.post<CrawlResponse>("/crawl", { urls }).then((r) => r.data),
 
-  // 1. GitHub Analysis
-  analyzeGithub: (repoUrls: string[], jobUrls: string[]): Promise<any> => {
-    return request<any>('/analyze/github', {
-      method: 'POST',
-      body: { repo_urls: repoUrls, job_urls: jobUrls }
-    });
-  },
+  // 종합 분석
+  analyzeUnified: (
+    githubUrl: string,
+    resumeText: string,
+    jobUrls: string[],
+  ): Promise<UnifiedAnalysisResponse> =>
+    client
+      .post<UnifiedAnalysisResponse>("/analyze/unified", {
+        github_url: githubUrl,
+        resume_text: resumeText,
+        job_urls: jobUrls,
+      })
+      .then((r) => r.data),
 
-  // 2. Gap Analysis
-  analyzeGap: (repoUrls: string[], resumeText: string, jobUrls: string[]): Promise<any> => {
-    return request<any>('/analyze/gap', {
-      method: 'POST',
-      body: { repo_urls: repoUrls, resume_text: resumeText, job_urls: jobUrls }
-    });
-  },
+  // GitHub 분석
+  analyzeGithub: (repoUrls: string[], jobUrls: string[]): Promise<any> =>
+    client
+      .post("/analyze/github", { repo_urls: repoUrls, job_urls: jobUrls })
+      .then((r) => r.data),
 
-  // 3. Resume-GitHub Link Analysis
-  analyzeResumeGithub: (resumeText: string, resumeUrl: string | null, githubUsername: string, techStack: string[]): Promise<any> => {
-    return request<any>('/analyze/resume-github', {
-      method: 'POST',
-      body: {
+  // Gap 분석
+  analyzeGap: (
+    repoUrls: string[],
+    resumeText: string,
+    jobUrls: string[],
+  ): Promise<any> =>
+    client
+      .post("/analyze/gap", {
+        repo_urls: repoUrls,
+        resume_text: resumeText,
+        job_urls: jobUrls,
+      })
+      .then((r) => r.data),
+
+  // 이력서-GitHub 연계 분석
+  analyzeResumeGithub: (
+    resumeText: string,
+    resumeUrl: string | null,
+    githubUsername: string,
+    techStack: string[],
+  ): Promise<any> =>
+    client
+      .post("/analyze/resume-github", {
         resume_text: resumeText,
         resume_url: resumeUrl,
         github_username: githubUsername,
-        tech_stack: techStack
-      }
-    });
-  },
+        tech_stack: techStack,
+      })
+      .then((r) => r.data),
 
-  // 4. AI Interview Question Generator
-  generateInterviewQuestions: (coverLetter: string): Promise<InterviewGenResponse> => {
-    return request<InterviewGenResponse>('/analyze/interview-questions', {
-      method: 'POST',
-      body: { cover_letter: coverLetter }
-    });
-  },
+  // 면접 질문 생성
+  generateInterviewQuestions: (
+    coverLetter: string,
+  ): Promise<InterviewGenResponse> =>
+    client
+      .post<InterviewGenResponse>("/analyze/interview-questions", {
+        cover_letter: coverLetter,
+      })
+      .then((r) => r.data),
 
-  // 5. Cover Letter Comparison
-  compareCoverLetters: (originalText: string, improvedText: string): Promise<CoverLetterCompareResponse> => {
-    return request<CoverLetterCompareResponse>('/analyze/cover-letter-compare', {
-      method: 'POST',
-      body: { original_text: originalText, improved_text: improvedText }
-    });
-  },
+  // 자소서 비교
+  compareCoverLetters: (
+    originalText: string,
+    improvedText: string,
+  ): Promise<CoverLetterCompareResponse> =>
+    client
+      .post<CoverLetterCompareResponse>("/analyze/cover-letter-compare", {
+        original_text: originalText,
+        improved_text: improvedText,
+      })
+      .then((r) => r.data),
 
-  // 6. Profile Management
-  getProfile: (): Promise<UserProfile> => {
-    return request<UserProfile>('/profile', { method: 'GET' });
-  },
+  // 프로필 조회
+  getProfile: (): Promise<UserProfile> =>
+    client.get<UserProfile>("/profile").then((r) => r.data),
 
-  updateProfile: (profileData: UserProfile): Promise<UserProfile> => {
-    return request<UserProfile>('/profile', {
-      method: 'POST',
-      body: profileData
-    });
-  },
+  // 프로필 수정
+  updateProfile: (profileData: UserProfile): Promise<UserProfile> =>
+    client.post<UserProfile>("/profile", profileData).then((r) => r.data),
 
-  // 7. History Logs
-  getHistory: (): Promise<AnalysisHistoryItem[]> => {
-    return request<AnalysisHistoryItem[]>('/history', { method: 'GET' });
-  },
+  // 히스토리 조회
+  getHistory: (): Promise<AnalysisHistoryItem[]> =>
+    client.get<AnalysisHistoryItem[]>("/history").then((r) => r.data),
 
-  deleteHistoryItem: (id: string): Promise<{ status: string; message: string }> => {
-    return request<{ status: string; message: string }>(`/history/${id}`, { method: 'DELETE' });
-  }
+  // 히스토리 삭제
+  deleteHistoryItem: (
+    id: string,
+  ): Promise<{ status: string; message: string }> =>
+    client
+      .delete<{ status: string; message: string }>(`/history/${id}`)
+      .then((r) => r.data),
 };
