@@ -10,7 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@rolldown/binding-win32-x64-msvc": "^1.1.1",
+=======
+    "axios": "^1.18.0",
+>>>>>>> 8451ef844f182a09d4f1ae239e4b1ddaa05723e1
     "lucide-react": "^0.469.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
