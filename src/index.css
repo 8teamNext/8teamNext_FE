@@ -17,18 +17,16 @@
   }
 }
 
-/* UI Utilities and Core Component classes using Tailwind v4 @utility directive */
-
 @utility card {
   background-color: white;
   border: 1px solid #eaeaea;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   &:hover {
-    border-color: #d3d3d3;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #d1d1d1;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
   }
 }
 
@@ -39,53 +37,63 @@
   gap: 0.5rem;
   font-family: var(--font-sans);
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
 }
 
 @utility btn-primary {
-  background-color: #000000;
+  background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
   color: #ffffff;
-  border-color: #000000;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
   &:hover {
-    background-color: #333333;
-    border-color: #333333;
+    background: linear-gradient(135deg, #15803D 0%, #16A34A 100%);
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.38);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
   }
   &:disabled {
-    background-color: #eaeaea;
+    background: #eaeaea;
     border-color: #eaeaea;
-    color: #888888;
+    color: #aaaaaa;
+    box-shadow: none;
     cursor: not-allowed;
+    transform: none;
   }
 }
 
 @utility btn-secondary {
   background-color: #ffffff;
-  border-color: #eaeaea;
-  color: #111111;
+  border-color: #e0e0e0;
+  color: #333333;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   &:hover {
-    background-color: #fafafa;
-    border-color: #d3d3d3;
+    background-color: #f8f8f8;
+    border-color: #c8c8c8;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
 }
 
 @utility btn-outline {
   background-color: transparent;
-  border: 1px solid #0070f3;
-  color: #0070f3;
+  border: 1.5px solid #16A34A;
+  color: #16A34A;
   &:hover {
-    background-color: #e6f1ff;
+    background-color: #F0FDF4;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.12);
   }
 }
 
 @utility badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.5rem;
+  padding: 0.18rem 0.55rem;
   font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 500;
@@ -96,60 +104,66 @@
 
 @utility badge-success {
   background-color: #ecfdf5;
-  border-color: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.2);
   color: #065f46;
 }
 
 @utility badge-warning {
   background-color: #fffbeb;
-  border-color: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.2);
   color: #92400e;
 }
 
 @utility badge-danger {
   background-color: #fef2f2;
-  border-color: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.2);
   color: #991b1b;
 }
 
 @utility badge-info {
-  background-color: #f5f5f5;
-  border-color: #eaeaea;
-  color: #111111;
+  background-color: #F0FDF4;
+  border-color: rgba(22, 163, 74, 0.18);
+  color: #15803D;
 }
 
 @utility form-input {
   width: 100%;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   padding: 0.5rem 0.75rem;
   background-color: #ffffff;
-  border: 1px solid #eaeaea;
-  border-radius: 6px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 8px;
   color: #111111;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   &:focus {
     outline: none;
-    border-color: #000000;
-    box-shadow: 0 0 0 1px #000000;
+    border-color: #16A34A;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+  }
+  &::placeholder {
+    color: #aaaaaa;
   }
 }
 
 @utility form-textarea {
   width: 100%;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
-  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  padding: 0.625rem 0.75rem;
   background-color: #ffffff;
-  border: 1px solid #eaeaea;
-  border-radius: 6px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 8px;
   color: #111111;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   resize: vertical;
   min-height: 100px;
   &:focus {
     outline: none;
-    border-color: #000000;
-    box-shadow: 0 0 0 1px #000000;
+    border-color: #16A34A;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+  }
+  &::placeholder {
+    color: #aaaaaa;
   }
 }
