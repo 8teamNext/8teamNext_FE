@@ -51,27 +51,27 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
     // PDF는 백엔드에서 텍스트 추출
     if (extension === 'pdf') {
       setExtracting(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      fetch('http://localhost:8000/api/parse-resume', {
-        method: 'POST',
-        body: formData,
-      })
-        .then(async (res) => {
+      (async () => {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('http://localhost:8000/api/parse-resume', {
+            method: 'POST',
+            body: formData,
+          });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.detail || 'PDF 추출 실패');
           }
-          return res.json();
-        })
-        .then((data) => {
+          const data = await res.json();
           onTextLoaded(data.text, file.name);
-        })
-        .catch((err) => {
+        } catch (err: any) {
           setError(err.message || 'PDF 텍스트 추출 중 오류가 발생했습니다.');
           setFileInfo(null);
-        })
-        .finally(() => setExtracting(false));
+        } finally {
+          setExtracting(false);
+        }
+      })();
       return;
     }
 
