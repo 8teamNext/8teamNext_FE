@@ -10,15 +10,22 @@ import {
   Briefcase,
   Layers,
 } from "lucide-react";
-import { api, CrawlResult, CrawlSuccess, CrawlFailed } from "../utils/api";
+import {
+  api,
+  CrawlResult,
+  CrawlSuccess,
+  CrawlFailed,
+  GithubPreviewResponse,
+} from "../utils/api";
 
 export default function Analysistest() {
-  const [githubUrl, setGithubUrl] = useState("");
+  const [githubUsername, setGithubUsername] = useState("");
   const [jobUrls, setJobUrls] = useState<string[]>([""]);
-
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [results, setResults] = useState<CrawlResult[] | null>(null);
+  const [githubResult, setGithubResult] =
+    useState<GithubPreviewResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleAddJobUrl = () => {
@@ -42,8 +49,8 @@ export default function Analysistest() {
   const handleStartAnalysis = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!githubUrl.trim()) {
-      setError("GitHub URL을 입력해주세요.");
+    if (!githubUsername.trim()) {
+      setError("GitHub 아이디를 입력해주세요.");
       return;
     }
 
@@ -56,30 +63,38 @@ export default function Analysistest() {
     setLoading(true);
     setError(null);
     setResults(null);
+    setGithubResult(null);
 
     setLoadingStep(1);
     const stepIntervals = [
       setTimeout(() => setLoadingStep(2), 1200),
       setTimeout(() => setLoadingStep(3), 2400),
+      setTimeout(() => setLoadingStep(4), 3600),
     ];
 
     try {
-      const data = await api.crawlJobs(filteredJobs);
-      await new Promise((resolve) => setTimeout(resolve, 2800));
-      setResults(data.results);
+      // crawlJobs + getGithubPreview 병렬 호출
+      const [crawlData, githubData] = await Promise.all([
+        api.crawlJobs(filteredJobs),
+        api.getGithubPreview(githubUsername),
+      ]);
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      setResults(crawlData.results);
+      setGithubResult(githubData);
     } catch (err: any) {
-      setError(err.message || "채용공고 크롤링 중 오류가 발생했습니다.");
+      setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
       stepIntervals.forEach(clearTimeout);
       setLoading(false);
     }
   };
 
-  // ── 로딩 화면 ──────────────────────────────────────────────────────────
+  // ── 로딩 화면 ────────────────────────────────────────────────────────
   if (loading) {
     const steps = [
-      "채용공고 URL 접속 및 데이터 수집 중...",
-      "공고 내 기술스택 키워드 추출 중...",
+      "GitHub 기술스택 분석 중...",
+      "채용공고 크롤링 중...",
+      "기술스택 키워드 추출 중...",
       "결과 정리 중...",
     ];
 
@@ -89,11 +104,9 @@ export default function Analysistest() {
           <div className="animate-spin rounded-full border-[3px] border-neutral-200 border-t-neutral-900 h-10 w-10"></div>
           <Sparkles size={18} className="absolute text-[#0070f3]" />
         </div>
-        <h2 className="text-xl font-bold mb-2 text-neutral-900">
-          채용공고 분석 중
-        </h2>
+        <h2 className="text-xl font-bold mb-2 text-neutral-900">분석 중</h2>
         <p className="text-sm text-neutral-500 mb-8">
-          입력하신 채용공고에서 기술스택 정보를 추출하고 있습니다.
+          GitHub와 채용공고를 분석하고 있습니다.
         </p>
 
         <div className="w-full bg-white border border-neutral-200 rounded-xl p-5 text-left shadow-xs">
@@ -135,7 +148,7 @@ export default function Analysistest() {
     );
   }
 
-  // ── 결과 화면 ──────────────────────────────────────────────────────────
+  // ── 결과 화면 ────────────────────────────────────────────────────────
   if (results) {
     const successResults = results.filter(
       (r): r is CrawlSuccess => r.status === "success",
@@ -148,19 +161,64 @@ export default function Analysistest() {
       <div className="max-w-[960px] mx-auto px-4">
         <div className="mb-8 border-b border-neutral-200 pb-6">
           <button
-            onClick={() => setResults(null)}
+            onClick={() => {
+              setResults(null);
+              setGithubResult(null);
+            }}
             className="btn btn-secondary inline-flex items-center text-xs gap-1.5 mb-4"
           >
             ← 다시 분석하기
           </button>
-          <h1 className="text-2xl font-bold text-neutral-900">
-            채용공고 분석 결과
-          </h1>
-          <p className="text-sm text-neutral-500 mt-1">
-            총 {results.length}개 공고 중 {successResults.length}개 성공
-            {failedResults.length > 0 && `, ${failedResults.length}개 실패`}
-          </p>
+          <h1 className="text-2xl font-bold text-neutral-900">분석 결과</h1>
         </div>
+
+        {/* GitHub 기술스택 섹션 */}
+        {githubResult && (
+          <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs mb-6">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
+              <Github size={18} />
+              <h2 className="text-sm font-bold text-neutral-900">
+                GitHub 기술스택 — {githubResult.username}
+              </h2>
+            </div>
+
+            {/* confirmed */}
+            <div className="mb-4">
+              <span className="text-xs font-semibold text-neutral-700 mb-2 block">
+                확인된 기술
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {githubResult.confirmed_skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* inferred */}
+            {githubResult.inferred_skills.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold text-neutral-700 mb-2 block">
+                  추론된 기술
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {githubResult.inferred_skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="text-[11px] bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full"
+                    >
+                      {skill} · 추론
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 실패 공고 */}
         {failedResults.length > 0 && (
@@ -189,7 +247,6 @@ export default function Analysistest() {
               key={r.url_index}
               className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs"
             >
-              {/* 공고 헤더 */}
               <div className="mb-4 pb-3 border-b border-neutral-100">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="text-sm font-bold text-neutral-900">
@@ -216,7 +273,6 @@ export default function Analysistest() {
                 </div>
               </div>
 
-              {/* 기술스택 */}
               <div>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 mb-2">
                   <Layers size={13} />
@@ -246,7 +302,7 @@ export default function Analysistest() {
     );
   }
 
-  // ── 입력 폼 ────────────────────────────────────────────────────────────
+  // ── 입력 폼 ──────────────────────────────────────────────────────────
   return (
     <div className="max-w-[960px] mx-auto px-4">
       <div className="mb-8">
@@ -254,7 +310,8 @@ export default function Analysistest() {
           채용공고 기술스택 분석
         </h1>
         <p className="text-sm text-neutral-500 leading-relaxed">
-          GitHub URL과 채용공고 URL을 입력하면 기술스택을 추출하여 분석합니다.
+          GitHub 아이디와 채용공고 URL을 입력하면 기술스택을 추출하여
+          분석합니다.
         </p>
       </div>
 
@@ -269,22 +326,25 @@ export default function Analysistest() {
         onSubmit={handleStartAnalysis}
         className="bg-white border border-neutral-200 rounded-xl p-8 shadow-xs"
       >
-        {/* GitHub URL */}
+        {/* GitHub 아이디 */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100">
             <Github size={18} />
             <h3 className="text-sm font-bold text-neutral-900">
-              1. GitHub URL
+              1. GitHub 아이디
             </h3>
           </div>
           <input
-            type="url"
+            type="text"
             className="form-input w-full"
-            placeholder="https://github.com/username"
-            value={githubUrl}
-            onChange={(e) => setGithubUrl(e.target.value)}
+            placeholder="kimcoding-dev"
+            value={githubUsername}
+            onChange={(e) => setGithubUsername(e.target.value)}
             required
           />
+          <span className="block text-xs text-neutral-400 mt-1">
+            github.com/ 뒤의 아이디를 입력하세요.
+          </span>
         </div>
 
         {/* 채용공고 URL */}

@@ -11,6 +11,14 @@ const client = axios.create({
 
 // ── 타입 정의 ──────────────────────────────────────────────────────────────
 
+// 타입 추가
+export interface GithubPreviewResponse {
+  username: string;
+  confirmed_skills: string[];
+  inferred_skills: string[];
+  raw_languages: Record<string, number>;
+}
+
 export interface RepoDetail {
   name: string;
   url: string;
@@ -131,6 +139,14 @@ export const api = {
   // 채용공고 URL 크롤링
   crawlJobs: (urls: string[]): Promise<CrawlResponse> =>
     client.post<CrawlResponse>("/crawl", { urls }).then((r) => r.data),
+
+  // 깃허브
+  getGithubPreview: (username: string): Promise<GithubPreviewResponse> =>
+    client
+      .get<GithubPreviewResponse>("/github/preview", {
+        params: { username },
+      })
+      .then((r) => r.data),
 
   // 종합 분석
   analyzeUnified: (
