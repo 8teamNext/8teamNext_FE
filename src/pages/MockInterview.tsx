@@ -113,6 +113,14 @@ export default function MockInterview() {
                       </div>
                       <p className="text-xs text-zinc-700 m-0 leading-relaxed">{q.sample_answer_tip}</p>
                     </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3.5">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800 mb-1.5 uppercase tracking-wider">
+                        <MessageSquare size={12} className="text-blue-600" />
+                        <span>모범 답변 예시</span>
+                      </div>
+                      <p className="text-xs text-blue-900 m-0 leading-relaxed whitespace-pre-line">{q.sample_answer}</p>
+                    </div>
                   </div>
                 )}
               </div>
