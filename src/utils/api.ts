@@ -64,7 +64,6 @@ export interface UnifiedAnalysisResponse {
 }
 
 export interface UserProfile {
-  email: string;
   name: string;
   github_username?: string;
   default_resume?: string;
