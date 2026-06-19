@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "./components/Navigation";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -6,17 +6,17 @@ import Analysis from "./pages/Analysis";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
-import { UserProfile } from "./utils/api";
+import { UserProfile, api } from "./utils/api";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("home");
-  const [user, setUser] = useState<UserProfile | null>({
-    name: "김코딩",
-    email: "user@example.com",
-    github_username: "kimcoding-dev",
-    default_resume: "",
-    default_cover_letter: "",
-  });
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    api.getProfile()
+      .then((profile) => setUser(profile))
+      .catch(() => {});
+  }, []);
 
   const handleLoginSuccess = (userData: UserProfile) => {
     setUser(userData);
@@ -72,6 +72,18 @@ export default function App() {
         user={user}
         onLogout={handleLogout}
       />
+
+      {user !== null && !user.name && currentPage !== "mypage" && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-800 flex items-center justify-between gap-4">
+          <span>프로필이 설정되지 않았습니다. 마이페이지에서 기본정보를 입력해주세요.</span>
+          <button
+            onClick={() => setCurrentPage("mypage")}
+            className="shrink-0 font-semibold underline bg-transparent border-0 cursor-pointer text-amber-900 text-xs"
+          >
+            지금 설정하기
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 max-w-[1160px] w-full mx-auto px-6 py-12">
         {renderPage()}
