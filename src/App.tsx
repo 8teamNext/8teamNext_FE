@@ -1,17 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Navigation from "./components/Navigation";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Analysis from "./pages/Analysis";
-import Analysistest from "./pages/Analysis_test";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
 import { UserProfile } from "./utils/api";
 
 export default function App() {
-  // const [currentPage, setCurrentPage] = useState<string>("home");
-  const [currentPage, setCurrentPage] = useState<string>("analysistest");
+  const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>({
     name: "김코딩",
     email: "user@example.com",
@@ -51,10 +49,10 @@ export default function App() {
             onLoginSuccess={handleLoginSuccess}
           />
         );
-      // case "analysis":
-      //   return <Analysis />;
-      case "analysistest":
-        return <Analysistest />;
+      case "analysis":
+        return <Analysis user={user} setCurrentPage={setCurrentPage} />;
+      // case "analysistest":
+      //   return <Analysistest />;
       case "interview":
         return <MockInterview />;
       case "dashboard":
