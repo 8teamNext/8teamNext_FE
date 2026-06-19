@@ -273,7 +273,8 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
 
   // ── 결과 렌더 (왼쪽 컬럼 안에서) ─────────────────────
   const ResultView = ({ r }: { r: UnifiedAnalysisResponse }) => {
-    const { portfolio_rating, overall_match_pct, skill_match_pct, active_weeks, total_commits, repo_coverage_pct, repo_count, github_analysis, resume_analysis, skill_gap, recommended_projects } = r;
+    const { portfolio_rating, overall_match_pct, skill_match_pct, active_weeks, total_commits, repo_coverage_pct, repo_count, comparison_result, github_analysis, resume_analysis, skill_gap, recommended_projects } = r;
+    const ai_comment = comparison_result?.ai_comment ?? "";
 
     const MetricBar = ({ pct, color }: { pct: number; color: string }) => (
       <div className="w-full h-2 rounded-full bg-zinc-100 overflow-hidden mt-2">
@@ -299,7 +300,7 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
           <div className="flex-1">
             <div className="text-[10px] text-zinc-400 uppercase tracking-widest mb-0.5">전체 매칭 비율</div>
             <div className="text-lg font-extrabold text-white leading-none mb-1">{portfolio_rating}</div>
-            <div className="text-[10px] text-zinc-500">기본점수 · 기술일치 · 커밋활동 · 커버리지 · 레포수 각 20% 동일 가중치</div>
+            <div className="text-[10px] text-zinc-500">기술일치 · 커밋활동 · 레포커버리지 각 33.3% 동일 가중치</div>
           </div>
           <button
             onClick={() => setResult(null)}
@@ -309,26 +310,26 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
           </button>
         </div>
 
-        {/* 5개 지표 카드 */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* 기본점수 */}
-          <div className="card col-span-2">
-            <div className="flex items-center gap-2 mb-1">
+        {/* AI 총평 */}
+        {ai_comment && (
+          <div className="card">
+            <div className="flex items-center gap-2 mb-2">
               <Sparkles size={14} style={{ color: '#16A34A' }} />
-              <span className="text-[11px] font-bold text-zinc-600">기본점수</span>
-              <span className="ml-auto text-[10px] text-zinc-400">가중치 20%</span>
+              <span className="text-[11px] font-bold text-zinc-600">AI 분석 총평</span>
+              <span className="ml-auto text-[10px] text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-full">GPT-4o-mini</span>
             </div>
-            <div className="text-2xl font-extrabold text-zinc-900">100<span className="text-sm font-semibold text-zinc-400">%</span></div>
-            <MetricBar pct={100} color="#16A34A" />
-            <p className="text-[10px] text-zinc-400 mt-2 m-0">분석에 참여한 모든 지원자에게 동일하게 부여되는 기본 점수</p>
+            <p className="text-xs text-zinc-600 leading-relaxed m-0">{ai_comment}</p>
           </div>
+        )}
 
+        {/* 3개 지표 카드 */}
+        <div className="grid grid-cols-2 gap-3">
           {/* 기술스택 일치도 */}
           <div className="card">
             <div className="flex items-center gap-2 mb-1">
               <BarChart2 size={14} style={{ color: '#16A34A' }} />
               <span className="text-[11px] font-bold text-zinc-600">기술스택 일치도</span>
-              <span className="ml-auto text-[10px] text-zinc-400">가중치 20%</span>
+              <span className="ml-auto text-[10px] text-zinc-400">가중치 33.3%</span>
             </div>
             <div className="text-2xl font-extrabold text-zinc-900">{skill_match_pct}<span className="text-sm font-semibold text-zinc-400">%</span></div>
             <MetricBar pct={skill_match_pct} color="#16A34A" />
@@ -340,7 +341,7 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
             <div className="flex items-center gap-2 mb-1">
               <Activity size={14} style={{ color: '#2563EB' }} />
               <span className="text-[11px] font-bold text-zinc-600">깃 커밋 활동</span>
-              <span className="ml-auto text-[10px] text-zinc-400">가중치 20%</span>
+              <span className="ml-auto text-[10px] text-zinc-400">가중치 33.3%</span>
             </div>
             <div className="text-2xl font-extrabold text-zinc-900">{active_weeks}<span className="text-sm font-semibold text-zinc-400"> / 52주</span></div>
             <MetricBar pct={Math.round(active_weeks / 52 * 100)} color="#2563EB" />
@@ -348,28 +349,17 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
           </div>
 
           {/* 레포 기술 커버리지 */}
-          <div className="card">
+          <div className="card col-span-2">
             <div className="flex items-center gap-2 mb-1">
               <FileCheck size={14} style={{ color: '#D97706' }} />
               <span className="text-[11px] font-bold text-zinc-600">레포 기술 커버리지</span>
-              <span className="ml-auto text-[10px] text-zinc-400">가중치 20%</span>
+              <span className="ml-auto text-[10px] text-zinc-400">가중치 33.3%</span>
             </div>
             <div className="text-2xl font-extrabold text-zinc-900">{repo_coverage_pct}<span className="text-sm font-semibold text-zinc-400">%</span></div>
             <MetricBar pct={repo_coverage_pct} color="#D97706" />
             <p className="text-[10px] text-zinc-400 mt-2 m-0">이력서 기술이 사용된 레포 비율</p>
           </div>
 
-          {/* 공개 레포지토리 수 */}
-          <div className="card">
-            <div className="flex items-center gap-2 mb-1">
-              <Github size={14} style={{ color: '#7C3AED' }} />
-              <span className="text-[11px] font-bold text-zinc-600">공개 레포지토리</span>
-              <span className="ml-auto text-[10px] text-zinc-400">가중치 10%</span>
-            </div>
-            <div className="text-2xl font-extrabold text-zinc-900">{repo_count}<span className="text-sm font-semibold text-zinc-400">개</span></div>
-            <MetricBar pct={Math.min(repo_count / 20 * 100, 100)} color="#7C3AED" />
-            <p className="text-[10px] text-zinc-400 mt-2 m-0">20개 기준 · 분석된 공개 레포지토리</p>
-          </div>
         </div>
 
         {/* GitHub Analysis */}

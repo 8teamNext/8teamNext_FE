@@ -72,6 +72,19 @@ export interface UnifiedAnalysisResponse {
   total_commits: number;
   repo_coverage_pct: number;
   repo_count: number;
+  comparison_result: {
+    service: string;
+    overall_score: number;
+    metrics: { key: string; label: string; score: number; detail: string }[];
+    raw: {
+      active_weeks: number;
+      total_commits: number;
+      repo_count: number;
+      matched_skills: string[];
+      unmatched_skills: string[];
+    };
+    ai_comment: string;
+  };
   github_analysis: UnifiedGithubPart;
   resume_analysis: UnifiedResumePart;
   skill_gap: UnifiedGapPart;
