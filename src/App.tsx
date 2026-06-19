@@ -3,17 +3,20 @@ import Navigation from "./components/Navigation";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Analysis from "./pages/Analysis";
+import Analysistest from "./pages/Analysis_test";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
 import { UserProfile, api } from "./utils/api";
 
 export default function App() {
+  // const [currentPage, setCurrentPage] = useState<string>("analysistest");
   const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    api.getProfile()
+    api
+      .getProfile()
       .then((profile) => setUser(profile))
       .catch(() => {});
   }, []);
@@ -75,7 +78,10 @@ export default function App() {
 
       {user !== null && !user.name && currentPage !== "mypage" && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-800 flex items-center justify-between gap-4">
-          <span>프로필이 설정되지 않았습니다. 마이페이지에서 기본정보를 입력해주세요.</span>
+          <span>
+            프로필이 설정되지 않았습니다. 마이페이지에서 기본정보를
+            입력해주세요.
+          </span>
           <button
             onClick={() => setCurrentPage("mypage")}
             className="shrink-0 font-semibold underline bg-transparent border-0 cursor-pointer text-amber-900 text-xs"
