@@ -25,7 +25,6 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
   
   // Profile Form States
   const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
   const [githubUsername, setGithubUsername] = useState(user?.github_username || '');
   const [resumeText, setResumeText] = useState(user?.default_resume || '');
   const [coverLetter, setCoverLetter] = useState(user?.default_cover_letter || '');
@@ -35,28 +34,44 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // user prop이 바뀌면 (App.tsx의 API fetch 완료 시) 폼 상태 동기화
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setGithubUsername(user.github_username || '');
+      setResumeText(user.default_resume || '');
+      setCoverLetter(user.default_cover_letter || '');
+    }
+  }, [user]);
+
   // Fetch initial profile & history on mount
   useEffect(() => {
-    const fetchProfileAndHistory = async () => {
+    const fetchProfile = async () => {
       setLoading(true);
       try {
         const profileData = await api.getProfile();
         setName(profileData.name);
-        setEmail(profileData.email);
-        setGithubUsername(profileData.github_username);
-        setResumeText(profileData.default_resume);
-        setCoverLetter(profileData.default_cover_letter);
-
-        const historyData = await api.getHistory();
-        setHistory(historyData);
+        setGithubUsername(profileData.github_username ?? '');
+        setResumeText(profileData.default_resume ?? '');
+        setCoverLetter(profileData.default_cover_letter ?? '');
       } catch (err) {
-        setError('마이페이지 데이터를 불러오는 중 오류가 발생했습니다.');
+        setError('프로필 정보를 불러오는 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfileAndHistory();
+    const fetchHistory = async () => {
+      try {
+        const historyData = await api.getHistory();
+        setHistory(historyData);
+      } catch {
+        // 히스토리 조회 실패는 조용히 처리
+      }
+    };
+
+    fetchProfile();
+    fetchHistory();
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,7 +80,6 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
     setError(null);
 
     const payload = {
-      email,
       name,
       github_username: githubUsername,
       default_resume: resumeText,
@@ -78,8 +92,9 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
       setSuccess('프로필 및 기본 문서가 성공적으로 업데이트되었습니다.');
       // Clear success alert after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError('프로필을 저장하는 도중 오류가 발생했습니다.');
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setError(detail ? `저장 오류: ${detail}` : '프로필을 저장하는 도중 오류가 발생했습니다.');
     }
   };
 
@@ -196,16 +211,6 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                />
-              </div>
-
-              <div className="form-group mb-5">
-                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">이메일 주소</label>
-                <input
-                  type="email"
-                  className="form-input bg-zinc-50 text-zinc-400 cursor-not-allowed"
-                  value={email}
-                  disabled
                 />
               </div>
 
