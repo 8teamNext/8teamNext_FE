@@ -13,6 +13,7 @@ import { api, InterviewGenResponse } from '../utils/api';
 
 export default function MockInterview() {
   const [coverLetter, setCoverLetter] = useState('');
+  const [jobPosting, setJobPosting] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InterviewGenResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,16 +29,24 @@ export default function MockInterview() {
       setError('자기소개서 텍스트를 입력하거나 파일을 업로드해주세요.');
       return;
     }
+    if (coverLetter.trim().length < 50) {
+      setError('자기소개서가 너무 짧습니다. 최소 50자 이상 입력해주세요.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const data = await api.generateInterviewQuestions(coverLetter);
+      const data = await api.generateInterviewQuestions(coverLetter, jobPosting);
       setResult(data);
-    } catch (err) {
-      setError(err.message || '인터뷰 질문 생성 도중 오류가 발생했습니다.');
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.detail ||
+        err?.message ||
+        '인터뷰 질문 생성 도중 오류가 발생했습니다.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -75,12 +84,24 @@ export default function MockInterview() {
         <div className="flex flex-col gap-3.5">
           {result.questions.map((q, idx) => {
             const isExpanded = expandedId === q.id;
+            const categoryColor: Record<string, string> = {
+              '기술 구현': 'bg-blue-100 text-blue-700',
+              '트러블슈팅': 'bg-red-100 text-red-700',
+              '시스템 설계': 'bg-purple-100 text-purple-700',
+              '협업·소통': 'bg-green-100 text-green-700',
+              'CS 기초': 'bg-yellow-100 text-yellow-700',
+              'DevOps': 'bg-orange-100 text-orange-700',
+            };
+            const badgeClass = categoryColor[q.category] ?? 'bg-zinc-100 text-zinc-600';
             return (
               <div key={q.id} className="bg-white border border-zinc-200 rounded-lg p-5 shadow-sm">
                 <div className="flex justify-between items-start gap-4 cursor-pointer mb-2.5" onClick={() => toggleExpand(q.id)}>
                   <div className="flex items-start gap-2.5">
                     <div className="bg-black text-white text-[10px] font-bold py-0.5 px-1.5 rounded font-mono shrink-0 mt-0.5">Q{idx + 1}</div>
-                    <h3 className="text-sm font-semibold text-zinc-900 m-0 leading-relaxed">{q.question}</h3>
+                    <div className="flex flex-col gap-1">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded self-start ${badgeClass}`}>{q.category}</span>
+                      <h3 className="text-sm font-semibold text-zinc-900 m-0 leading-relaxed">{q.question}</h3>
+                    </div>
                   </div>
                   <button className="bg-transparent border-0 cursor-pointer flex items-center gap-1 shrink-0 p-0">
                     {isExpanded ? <EyeOff size={14} className="text-zinc-500" /> : <Eye size={14} className="text-blue-600" />}
@@ -163,6 +184,19 @@ export default function MockInterview() {
               placeholder="프로젝트 설계, 구현 및 협업 트러블슈팅 내역이 작성된 자소서를 입력해주세요..."
               value={coverLetter}
               onChange={(e) => setCoverLetter(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white border border-zinc-200 rounded-lg p-5 mt-4">
+          <h3 className="text-sm font-bold text-zinc-900 m-0 mb-1.5">채용공고 입력 <span className="text-zinc-400 font-normal">(선택)</span></h3>
+          <p className="text-xs text-zinc-500 m-0 mb-4">채용공고를 붙여넣으면 요구 역량과 연계된 맞춤형 질문이 생성됩니다.</p>
+          <div className="form-group mb-0">
+            <textarea
+              className="form-textarea min-h-[140px]"
+              placeholder="채용공고 내용을 붙여넣어 주세요 (직무 설명, 자격 요건, 우대 사항 등)..."
+              value={jobPosting}
+              onChange={(e) => setJobPosting(e.target.value)}
             />
           </div>
         </div>

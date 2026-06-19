@@ -79,6 +79,7 @@ export interface AnalysisHistoryItem {
 
 export interface InterviewQuestion {
   id: number;
+  category: string;
   question: string;
   intent: string;
   suggested_keywords: string[];
@@ -185,10 +186,12 @@ export const api = {
   // 면접 질문 생성
   generateInterviewQuestions: (
     coverLetter: string,
+    jobPosting?: string,
   ): Promise<InterviewGenResponse> =>
     client
       .post<InterviewGenResponse>("/analyze/interview-questions", {
         cover_letter: coverLetter,
+        job_posting: jobPosting ?? "",
       })
       .then((r) => r.data),
 
