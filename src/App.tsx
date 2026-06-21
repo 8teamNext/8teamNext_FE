@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Analysis from "./pages/Analysis";
 import Analysistest from "./pages/Analysis_test";
+import LeancageAnalysisTest from "./pages/leancageAnalysis_test";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
@@ -11,7 +12,7 @@ import { UserProfile, api } from "./utils/api";
 
 export default function App() {
   // const [currentPage, setCurrentPage] = useState<string>("analysistest");
-  const [currentPage, setCurrentPage] = useState<string>("home");
+  const [currentPage, setCurrentPage] = useState<string>("leancage-test");
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -56,6 +57,8 @@ export default function App() {
         return <Analysis user={user} setCurrentPage={setCurrentPage} />;
       // case "analysistest":
       //   return <Analysistest />;
+      case "leancage-test":
+        return <LeancageAnalysisTest />;
       case "interview":
         return <MockInterview />;
       case "dashboard":

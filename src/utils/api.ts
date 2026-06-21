@@ -153,9 +153,60 @@ export interface CrawlResponse {
   results: CrawlResult[];
 }
 
+// ── Leancage 분석 타입 ────────────────────────────────────────────────────
+
+export interface LeancageMetric {
+  key: string;
+  label: string;
+  score: number;
+  detail: string;
+}
+
+export interface LeancageJobComparison {
+  url: string;
+  company: string;
+  title: string;
+  job_type: string;
+  overall_score: number;
+  tech_score: number;
+  task_score: number;
+  career_score: number;
+  matched_skills: string[];
+  missing_skills: string[];
+  extra_skills: string[];
+}
+
+export interface LeancageResult {
+  service: string;
+  overall_score: number;
+  metrics: LeancageMetric[];
+  raw: {
+    match_rate: number;
+    matched_skills: string[];
+    missing_skills: string[];
+    extra_skills: string[];
+    overall_evaluation: string;
+    career_level: string;
+  };
+  detail: {
+    resume_skills: string[];
+    job_required_skills: string[];
+    job_comparisons: LeancageJobComparison[];
+  };
+}
+
 // ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
+  // 이력서-채용공고 비교 분석 (leancage)
+  analyzeLeancage: (resumeText: string, jobUrls: string[]): Promise<LeancageResult> =>
+    client
+      .post<LeancageResult>("/leancage/analyze", {
+        resume_text: resumeText,
+        job_urls: jobUrls,
+      })
+      .then((r) => r.data),
+
   // 채용공고 URL 크롤링
   crawlJobs: (urls: string[]): Promise<CrawlResponse> =>
     client.post<CrawlResponse>("/crawl", { urls }).then((r) => r.data),
