@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import {
   Sparkles,
   Github,
+  GitBranch,
   FileText,
   CheckCircle2,
   AlertTriangle,
@@ -21,14 +22,16 @@ import {
   BarChart2,
   ArrowRight,
 } from "lucide-react";
-import { api, UnifiedAnalysisResponse, UserProfile } from "../utils/api";
+import { api, UnifiedAnalysisResponse, UserProfile, ResumeGithubResponse } from "../utils/api";
+import { ResumeGithubModal } from "./ResumeGithubDetail";
 
 interface AnalysisProps {
   user?: UserProfile | null;
   setCurrentPage?: (page: string) => void;
+  onResumeGithubResult?: (result: ResumeGithubResponse) => void;
 }
 
-export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
+export default function Analysis({ user, setCurrentPage, onResumeGithubResult }: AnalysisProps) {
   const [resumeText, setResumeText] = useState("");
   const [originalResumeText, setOriginalResumeText] = useState("");
   const [jobUrls, setJobUrls] = useState<string[]>([""]);
@@ -44,6 +47,10 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
     reason: string;
   } | null>(null);
   const [validating, setValidating] = useState(false);
+
+  // 이력서-GitHub 분석 결과 & 모달
+  const [resumeGithubResult, setResumeGithubResult] = useState<ResumeGithubResponse | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // 등록된 채용공고
   const [registeredUrls, setRegisteredUrls] = useState<string[]>([]);
@@ -181,16 +188,14 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
   const handleUpdateJobUrl = (i: number, v: string) => { const u = [...jobUrls]; u[i] = v; setJobUrls(u); };
 
   // ── 분석 시작 ─────────────────────────────────────────
-  const handleStartAnalysis = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStartAnalysis = async () => {
     if (!githubUsername) {
       setError("GitHub 계정이 설정되지 않았습니다. 마이페이지에서 GitHub 계정명을 먼저 등록해주세요.");
       return;
     }
     if (!resumeText.trim()) { setError("이력서 텍스트를 입력하거나 파일을 업로드해 주세요."); return; }
-    const filteredJobs = registeredUrls.filter((u) => u.trim());
-    if (filteredJobs.length === 0) { setError("채용공고 URL을 최소 하나 입력해주세요."); return; }
 
+    // 이력서 검증
     setValidating(true);
     let validation = resumeValidation;
     try {
@@ -203,32 +208,32 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
     } catch { /* 네트워크 오류 시 통과 */ } finally { setValidating(false); }
     if (validation && !validation.valid) return;
 
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null);
     setLoadingStep(1);
     const timers = [
-      setTimeout(() => setLoadingStep(2), 1200),
-      setTimeout(() => setLoadingStep(3), 2400),
-      setTimeout(() => setLoadingStep(4), 3600),
+      setTimeout(() => setLoadingStep(2), 1000),
+      setTimeout(() => setLoadingStep(3), 2200),
     ];
     try {
-      const data = await api.analyzeUnified(`https://github.com/${githubUsername}`, resumeText, filteredJobs);
-      await new Promise((r) => setTimeout(r, 4000));
-      setResult(data);
+      const data = await api.analyzeResumeGithub(resumeText, null, githubUsername, []);
+      setResumeGithubResult(data);
+      onResumeGithubResult?.(data);
+      setShowDetailModal(true);
     } catch (err: any) {
       setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
       timers.forEach(clearTimeout);
       setLoading(false);
+      setLoadingStep(0);
     }
   };
 
   // ── Loading ────────────────────────────────────────────
   if (loading) {
     const steps = [
-      "GitHub 레포지토리 정보 및 소스코드 품질 스캔 중...",
-      "이력서 기재 기술과 깃허브 코드 구현 상호 대조 중...",
-      "채용 요구사항 기반 핵심 역량 Gap 분석 중...",
-      "부족 스택 극복을 위한 맞춤형 프로젝트 설계 및 로드맵 도출 중...",
+      "GitHub 레포지토리 기술 스택 스캔 중...",
+      "이력서 기재 기술과 GitHub 코드 상호 대조 중...",
+      "기술 정합성 분석 결과 생성 중...",
     ];
     return (
       <div className="flex flex-col items-center justify-center py-24 px-6 text-center max-w-[520px] mx-auto">
@@ -793,7 +798,7 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
       </div>
 
       {/* ── 분석 시작하기 버튼 ── */}
-      <div className="flex justify-center mt-8 mb-2">
+      <div className="flex flex-col items-center gap-3 mt-8 mb-2">
         <button
           type="button"
           onClick={handleStartAnalysis}
@@ -808,7 +813,30 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
           <Sparkles size={22} />
           분석 시작하기
         </button>
+
+        {/* 이전 분석 결과 상세보기 버튼 (분석 완료 후 표시) */}
+        {resumeGithubResult && (
+          <button
+            type="button"
+            onClick={() => setShowDetailModal(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold py-1.5 px-4 rounded-xl border cursor-pointer transition-all"
+            style={{ background: '#F0FDF4', borderColor: 'rgba(22,163,74,0.25)', color: '#15803D' }}
+          >
+            <GitBranch size={13} />
+            이력서·GitHub 분석 상세보기
+          </button>
+        )}
       </div>
+
+      {/* ── 이력서-GitHub 상세 모달 ── */}
+      {resumeGithubResult && (
+        <ResumeGithubModal
+          result={resumeGithubResult}
+          githubUsername={githubUsername}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+        />
+      )}
     </div>
   );
 }
