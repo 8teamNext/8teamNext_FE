@@ -68,6 +68,7 @@ export interface RepoDetail {
   stars: number;
   quality_score: number;
   description: string;
+  commit_count: number;
 }
 
 export interface RecommendedProject {
@@ -82,6 +83,7 @@ export interface RecommendedProject {
 
 export interface UnifiedGithubPart {
   repo_count: number;
+  total_commits: number;
   tech_stack: string[];
   readme_quality: string;
   project_completeness: string;
@@ -103,8 +105,26 @@ export interface UnifiedGapPart {
 }
 
 export interface UnifiedAnalysisResponse {
-  overall_score: number;
   portfolio_rating: string;
+  overall_match_pct: number;
+  skill_match_pct: number;
+  active_weeks: number;
+  total_commits: number;
+  repo_coverage_pct: number;
+  repo_count: number;
+  comparison_result: {
+    service: string;
+    overall_score: number;
+    metrics: { key: string; label: string; score: number; detail: string }[];
+    raw: {
+      active_weeks: number;
+      total_commits: number;
+      repo_count: number;
+      matched_skills: string[];
+      unmatched_skills: string[];
+    };
+    ai_comment: string;
+  };
   github_analysis: UnifiedGithubPart;
   resume_analysis: UnifiedResumePart;
   skill_gap: UnifiedGapPart;
@@ -171,6 +191,18 @@ export type CrawlResult = CrawlSuccess | CrawlFailed;
 
 export interface CrawlResponse {
   results: CrawlResult[];
+}
+
+// 이력서-GitHub 분석 결과 타입
+export interface ResumeGithubResponse {
+  overall_evaluation: string;
+  resume_skills: string[];
+  github_skills: string[];
+  verified_skills: string[];
+  unverified_skills: string[];
+  newly_discovered_skills: string[];
+  supplement_advice: string;   // LLM 이력서 보완 권고
+  update_suggestion: string;   // LLM 이력서 업데이트 제안
 }
 
 // ── API 함수 ───────────────────────────────────────────────────────────────
