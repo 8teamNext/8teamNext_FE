@@ -3,25 +3,24 @@ import {
   Sparkles,
   Github,
   AlertTriangle,
-  Code2,
   Plus,
   Trash2,
-  Building2,
-  Briefcase,
-  Layers,
   Search,
   ExternalLink,
   FileCheck,
-  BarChart2,
-  ArrowRight,
+  Layers,
+  Building2,
+  Briefcase,
   CheckCircle2,
+  XCircle,
+  PlusCircle,
 } from "lucide-react";
 import {
   api,
-  CrawlResult,
-  CrawlSuccess,
-  CrawlFailed,
-  GithubPreviewResponse,
+  MatchingResult,
+  MatchingSuccess,
+  MatchingFailed,
+  AnalyzeResponse,
 } from "../utils/api";
 
 export default function Analysistest() {
@@ -31,9 +30,7 @@ export default function Analysistest() {
 
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
-  const [results, setResults] = useState<CrawlResult[] | null>(null);
-  const [githubResult, setGithubResult] =
-    useState<GithubPreviewResponse | null>(null);
+  const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // ── URL 등록 ──────────────────────────────────────────
@@ -64,8 +61,7 @@ export default function Analysistest() {
 
     setLoading(true);
     setError(null);
-    setResults(null);
-    setGithubResult(null);
+    setResult(null);
 
     setLoadingStep(1);
     const stepIntervals = [
@@ -75,13 +71,9 @@ export default function Analysistest() {
     ];
 
     try {
-      const [crawlData, githubData] = await Promise.all([
-        api.crawlJobs(registeredUrls),
-        api.getGithubPreview(githubUsername),
-      ]);
+      const data = await api.analyze(githubUsername, registeredUrls);
       await new Promise((resolve) => setTimeout(resolve, 4000));
-      setResults(crawlData.results);
-      setGithubResult(githubData);
+      setResult(data);
     } catch (err: any) {
       setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
@@ -96,7 +88,7 @@ export default function Analysistest() {
       "GitHub 기술스택 분석 중...",
       "채용공고 크롤링 중...",
       "기술스택 키워드 추출 중...",
-      "결과 정리 중...",
+      "매칭 분석 중...",
     ];
 
     return (
@@ -114,7 +106,7 @@ export default function Analysistest() {
         </div>
         <h2 className="text-xl font-bold mb-2 text-zinc-900">분석 중</h2>
         <p className="text-sm text-zinc-500 mb-8">
-          GitHub와 채용공고를 분석하고 있습니다.
+          GitHub와 채용공고를 분석하고 매칭하고 있습니다.
         </p>
         <div className="w-full bg-white border border-zinc-100 rounded-2xl p-5 text-left shadow-sm">
           {steps.map((step, idx) => {
@@ -128,7 +120,7 @@ export default function Analysistest() {
                 }`}
               >
                 <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 text-white"
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
                   style={{
                     background: done
                       ? "linear-gradient(135deg, #10b981, #059669)"
@@ -141,9 +133,7 @@ export default function Analysistest() {
                   {done ? "✓" : idx + 1}
                 </div>
                 <span
-                  className={`text-xs ${
-                    cur ? "font-semibold text-zinc-900" : "text-zinc-500"
-                  }`}
+                  className={`text-xs ${cur ? "font-semibold text-zinc-900" : "text-zinc-500"}`}
                 >
                   {step}
                 </span>
@@ -156,12 +146,13 @@ export default function Analysistest() {
   }
 
   // ── 결과 화면 ─────────────────────────────────────────
-  if (results) {
-    const successResults = results.filter(
-      (r): r is CrawlSuccess => r.status === "success",
+  if (result) {
+    const { github, matching } = result;
+    const successMatching = matching.filter(
+      (r): r is MatchingSuccess => r.status === "success",
     );
-    const failedResults = results.filter(
-      (r): r is CrawlFailed => r.status === "failed",
+    const failedMatching = matching.filter(
+      (r): r is MatchingFailed => r.status === "failed",
     );
 
     return (
@@ -170,10 +161,7 @@ export default function Analysistest() {
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-bold text-zinc-900">분석 결과</h1>
           <button
-            onClick={() => {
-              setResults(null);
-              setGithubResult(null);
-            }}
+            onClick={() => setResult(null)}
             className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
             style={{
               borderColor: "#eaeaea",
@@ -186,80 +174,74 @@ export default function Analysistest() {
         </div>
 
         {/* GitHub 기술스택 */}
-        {githubResult && (
-          <div
-            className="bg-white rounded-2xl p-5 border mb-6"
-            style={{
-              borderColor: "#eaeaea",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-            }}
-          >
-            <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-100">
-              <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center"
-                style={{ background: "#1a1a1a" }}
-              >
-                <Github size={14} className="text-white" />
-              </div>
-              <h2 className="text-sm font-bold text-zinc-900">
-                GitHub 기술스택 — @{githubResult.username}
-              </h2>
+        <div
+          className="bg-white rounded-2xl p-5 border mb-6"
+          style={{
+            borderColor: "#eaeaea",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-100">
+            <div
+              className="w-6 h-6 rounded-lg flex items-center justify-center"
+              style={{ background: "#1a1a1a" }}
+            >
+              <Github size={14} className="text-white" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* confirmed */}
+            <h2 className="text-sm font-bold text-zinc-900">
+              GitHub 기술스택 — @{github.username}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide block mb-2">
+                확인된 기술
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {github.confirmed_skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                    style={{
+                      background: "#F0FDF4",
+                      color: "#16A34A",
+                      border: "1px solid rgba(22,163,74,0.2)",
+                    }}
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {github.inferred_skills.length > 0 && (
               <div>
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide block mb-2">
-                  확인된 기술
+                  추론된 기술
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {githubResult.confirmed_skills.map((skill) => (
+                  {github.inferred_skills.map((skill) => (
                     <span
                       key={skill}
                       className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
                       style={{
-                        background: "#F0FDF4",
-                        color: "#16A34A",
-                        border: "1px solid rgba(22,163,74,0.2)",
+                        background: "#EFF6FF",
+                        color: "#2563EB",
+                        border: "1px solid rgba(37,99,235,0.2)",
                       }}
                     >
-                      {skill}
+                      {skill} · 추론
                     </span>
                   ))}
                 </div>
               </div>
-
-              {/* inferred */}
-              {githubResult.inferred_skills.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide block mb-2">
-                    추론된 기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {githubResult.inferred_skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#EFF6FF",
-                          color: "#2563EB",
-                          border: "1px solid rgba(37,99,235,0.2)",
-                        }}
-                      >
-                        {skill} · 추론
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* 실패 공고 */}
-        {failedResults.length > 0 && (
+        {failedMatching.length > 0 && (
           <div className="mb-4">
-            {failedResults.map((r) => (
+            {failedMatching.map((r) => (
               <div
                 key={r.url_index}
                 className="flex gap-2 bg-red-50 border border-red-100 rounded-xl p-3 text-red-800 text-xs mb-2"
@@ -269,16 +251,16 @@ export default function Analysistest() {
                   className="shrink-0 mt-0.5 text-red-400"
                 />
                 <span>
-                  공고 {r.url_index + 1}번 크롤링 실패: {r.error}
+                  공고 {r.url_index + 1}번 실패: {r.error}
                 </span>
               </div>
             ))}
           </div>
         )}
 
-        {/* 성공 공고 */}
+        {/* 매칭 결과 공고별 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {successResults.map((r) => (
+          {successMatching.map((r) => (
             <div
               key={r.url_index}
               className="bg-white rounded-2xl p-5 border"
@@ -287,6 +269,7 @@ export default function Analysistest() {
                 boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
               }}
             >
+              {/* 공고 헤더 */}
               <div className="mb-4 pb-3 border-b border-zinc-100">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="text-sm font-bold text-zinc-900">
@@ -296,7 +279,7 @@ export default function Analysistest() {
                     #{r.url_index + 1}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-3 mt-2">
+                <div className="flex flex-wrap gap-3 mt-1">
                   {r.company && (
                     <span className="flex items-center gap-1 text-[11px] text-zinc-500">
                       <Building2 size={11} /> {r.company}
@@ -310,32 +293,131 @@ export default function Analysistest() {
                 </div>
               </div>
 
-              <div>
-                <span className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-2">
-                  <Layers size={12} /> 기술스택
-                </span>
-                {r.tech_stack.length > 0 ? (
+              {/* 매칭 점수 */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div
+                  className="rounded-xl p-3 text-center"
+                  style={{
+                    background: "#F0FDF4",
+                    border: "1px solid rgba(22,163,74,0.15)",
+                  }}
+                >
+                  <div
+                    className="text-xl font-extrabold"
+                    style={{ color: "#16A34A" }}
+                  >
+                    {r.confirmed_score}%
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5">
+                    확인된 기술 매칭
+                  </div>
+                </div>
+                <div
+                  className="rounded-xl p-3 text-center"
+                  style={{
+                    background: "#EFF6FF",
+                    border: "1px solid rgba(37,99,235,0.15)",
+                  }}
+                >
+                  <div
+                    className="text-xl font-extrabold"
+                    style={{ color: "#2563EB" }}
+                  >
+                    {r.inferred_score}%
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5">
+                    추론된 기술 매칭
+                  </div>
+                </div>
+              </div>
+
+              {/* 매칭된 기술 */}
+              {(r.confirmed_matched.length > 0 ||
+                r.inferred_matched.length > 0) && (
+                <div className="mb-3">
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                    <CheckCircle2 size={11} className="text-green-500" /> 매칭된
+                    기술
+                  </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {r.tech_stack.map((tech) => (
+                    {r.confirmed_matched.map((s) => (
                       <span
-                        key={tech}
+                        key={s}
+                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{
+                          background: "#F0FDF4",
+                          color: "#16A34A",
+                          border: "1px solid rgba(22,163,74,0.2)",
+                        }}
+                      >
+                        {s}
+                      </span>
+                    ))}
+                    {r.inferred_matched.map((s) => (
+                      <span
+                        key={s}
                         className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
                         style={{
                           background: "#EFF6FF",
                           color: "#2563EB",
-                          border: "1px solid rgba(37,99,235,0.15)",
+                          border: "1px solid rgba(37,99,235,0.2)",
                         }}
                       >
-                        {tech}
+                        {s} · 추론
                       </span>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-zinc-400 italic">
-                    기술스택을 추출하지 못했습니다.
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* 부족한 기술 */}
+              {r.missing.length > 0 && (
+                <div className="mb-3">
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                    <XCircle size={11} className="text-red-400" /> 부족한 기술
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {r.missing.map((s) => (
+                      <span
+                        key={s}
+                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{
+                          background: "#FEF2F2",
+                          color: "#DC2626",
+                          border: "1px solid rgba(220,38,38,0.2)",
+                        }}
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 추가 보유 기술 */}
+              {r.extra_confirmed.length > 0 && (
+                <div>
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                    <PlusCircle size={11} className="text-zinc-400" /> 추가 보유
+                    기술
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {r.extra_confirmed.map((s) => (
+                      <span
+                        key={s}
+                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{
+                          background: "#F4F4F5",
+                          color: "#71717A",
+                          border: "1px solid rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

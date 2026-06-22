@@ -10,8 +10,8 @@ import MyPage from "./pages/MyPage";
 import { UserProfile, api } from "./utils/api";
 
 export default function App() {
-  // const [currentPage, setCurrentPage] = useState<string>("analysistest");
-  const [currentPage, setCurrentPage] = useState<string>("home");
+  const [currentPage, setCurrentPage] = useState<string>("analysistest");
+  // const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -54,8 +54,8 @@ export default function App() {
         );
       case "analysis":
         return <Analysis user={user} setCurrentPage={setCurrentPage} />;
-      // case "analysistest":
-      //   return <Analysistest />;
+      case "analysistest":
+        return <Analysistest />;
       case "interview":
         return <MockInterview />;
       case "dashboard":
