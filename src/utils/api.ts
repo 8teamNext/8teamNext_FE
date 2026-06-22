@@ -153,6 +153,18 @@ export interface CrawlResponse {
   results: CrawlResult[];
 }
 
+// 이력서-GitHub 분석 결과 타입
+export interface ResumeGithubResponse {
+  overall_evaluation: string;
+  resume_skills: string[];
+  github_skills: string[];
+  verified_skills: string[];
+  unverified_skills: string[];
+  newly_discovered_skills: string[];
+  supplement_advice: string;   // LLM 이력서 보완 권고
+  update_suggestion: string;   // LLM 이력서 업데이트 제안
+}
+
 // ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
