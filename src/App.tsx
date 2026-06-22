@@ -13,7 +13,8 @@ import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 
 export default function App() {
   // const [currentPage, setCurrentPage] = useState<string>("analysistest");
-  const [currentPage, setCurrentPage] = useState<string>("leancage-test");
+  // const [currentPage, setCurrentPage] = useState<string>("leancage-test");
+  const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
   const [resumeGithubResult, setResumeGithubResult] = useState<ResumeGithubResponse | null>(null);
 
