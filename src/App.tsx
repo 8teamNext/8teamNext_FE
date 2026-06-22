@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Analysis from "./pages/Analysis";
 import Analysistest from "./pages/Analysis_test";
+import LeancageAnalysisTest from "./pages/leancageAnalysis_test";
 import ResumeGithubDetail from "./pages/ResumeGithubDetail";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
@@ -12,6 +13,7 @@ import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 
 export default function App() {
   // const [currentPage, setCurrentPage] = useState<string>("analysistest");
+  // const [currentPage, setCurrentPage] = useState<string>("leancage-test");
   const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
   const [resumeGithubResult, setResumeGithubResult] = useState<ResumeGithubResponse | null>(null);
@@ -76,6 +78,8 @@ export default function App() {
         );
       // case "analysistest":
       //   return <Analysistest />;
+      case "leancage-test":
+        return <LeancageAnalysisTest />;
       case "interview":
         return <MockInterview />;
       case "dashboard":
