@@ -14,7 +14,6 @@ import {
   BarChart2,
   Briefcase,
   Code2,
-  ClipboardList,
   UserCheck,
   ChevronDown,
   ChevronUp,
@@ -22,15 +21,15 @@ import {
 import { api, LeancageResult, LeancageJobComparison } from "../utils/api";
 
 const METRIC_COLORS: Record<string, string> = {
-  tech_match:     "#16A34A",
-  task_relevance: "#2563EB",
-  career_fit:     "#7C3AED",
+  tech_match:   "#16A34A",
+  domain_match: "#2563EB",
+  career_fit:   "#7C3AED",
 };
 
 const METRIC_ICONS: Record<string, React.ReactNode> = {
-  tech_match:     <Code2 size={13} />,
-  task_relevance: <ClipboardList size={13} />,
-  career_fit:     <UserCheck size={13} />,
+  tech_match:   <Code2 size={13} />,
+  domain_match: <Briefcase size={13} />,
+  career_fit:   <UserCheck size={13} />,
 };
 
 const CAREER_LABEL: Record<string, string> = {
@@ -87,7 +86,7 @@ const JobCard = ({ job }: { job: LeancageJobComparison }) => {
               </span>
             )}
             <span className="text-green-600">매칭 {job.tech_score}%</span>
-            <span className="text-blue-600">업무 {job.task_score}%</span>
+            <span className="text-blue-600">도메인 {job.domain_score}%</span>
             <span className="text-purple-600">경력 {job.career_score}%</span>
           </div>
         </div>
@@ -102,7 +101,7 @@ const JobCard = ({ job }: { job: LeancageJobComparison }) => {
           <div className="grid grid-cols-3 gap-3 pt-3 mb-3">
             {[
               { label: "기술 매칭", score: job.tech_score,   color: "#16A34A" },
-              { label: "담당업무",   score: job.task_score,   color: "#2563EB" },
+              { label: "도메인 일치", score: job.domain_score, color: "#2563EB" },
               { label: "경력 조건", score: job.career_score, color: "#7C3AED" },
             ].map(({ label, score, color }) => (
               <div key={label} className="bg-white rounded-lg px-3 py-2">

@@ -169,7 +169,7 @@ export interface LeancageJobComparison {
   job_type: string;
   overall_score: number;
   tech_score: number;
-  task_score: number;
+  domain_score: number;
   career_score: number;
   matched_skills: string[];
   missing_skills: string[];
