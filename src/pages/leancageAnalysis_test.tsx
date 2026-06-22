@@ -17,6 +17,7 @@ import {
   UserCheck,
   ChevronDown,
   ChevronUp,
+  X,
 } from "lucide-react";
 import { api, LeancageResult, LeancageJobComparison } from "../utils/api";
 
@@ -156,13 +157,7 @@ const JobCard = ({ job }: { job: LeancageJobComparison }) => {
 };
 
 // ── 결과 뷰 ──────────────────────────────────────────────────────────────────
-const ResultView = ({
-  result,
-  onReset,
-}: {
-  result: LeancageResult;
-  onReset: () => void;
-}) => {
+const ResultView = ({ result }: { result: LeancageResult }) => {
   const { overall_score, metrics, raw, detail } = result;
   const careerLabel = CAREER_LABEL[raw.career_level] ?? raw.career_level;
 
@@ -217,12 +212,6 @@ const ResultView = ({
           </div>
         </div>
 
-        <button
-          onClick={onReset}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition border border-white/10 shrink-0"
-        >
-          다시 분석
-        </button>
       </div>
 
       {/* AI 총평 */}
@@ -342,10 +331,11 @@ export default function LeancageAnalysisTest() {
   const [urlInput, setUrlInput]               = useState("");
   const [registeredUrls, setRegisteredUrls]   = useState<string[]>([]);
 
-  const [loading, setLoading]     = useState(false);
+  const [loading, setLoading]       = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
-  const [result, setResult]       = useState<LeancageResult | null>(null);
-  const [error, setError]         = useState<string | null>(null);
+  const [result, setResult]         = useState<LeancageResult | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError]           = useState<string | null>(null);
 
   const [isDragActive, setIsDragActive] = useState(false);
   const [fileInfo, setFileInfo]   = useState<{ name: string; size: string } | null>(null);
@@ -434,6 +424,7 @@ export default function LeancageAnalysisTest() {
       const data = await api.analyzeLeancage(resumeText, registeredUrls);
       await new Promise((r) => setTimeout(r, 3800));
       setResult(data);
+      setIsModalOpen(true);
     } catch (err: any) {
       setError(err?.response?.data?.error ?? err.message ?? "분석 중 오류가 발생했습니다.");
     } finally {
@@ -442,70 +433,12 @@ export default function LeancageAnalysisTest() {
     }
   };
 
-  // ── 로딩 ───────────────────────────────────────────────────────────────────
-  if (loading) {
-    const steps = [
-      "채용공고 URL 파싱 중...",
-      "이력서 기술 추출 중...",
-      "공고별 기술 · 업무 · 경력 매칭 중...",
-      "AI 종합 평가 생성 중...",
-    ];
-    return (
-      <div className="flex flex-col items-center justify-center py-24 px-6 text-center max-w-[520px] mx-auto">
-        <div className="relative mb-6 flex items-center justify-center">
-          <div
-            className="animate-spin rounded-full border-[3px] h-12 w-12"
-            style={{ borderColor: "#F0FDF4", borderTopColor: "#16A34A" }}
-          />
-          <Sparkles size={18} className="absolute" style={{ color: "#16A34A" }} />
-        </div>
-        <h2 className="text-xl font-bold mb-2 text-zinc-900">이력서 × 채용공고 분석 중</h2>
-        <p className="text-sm text-zinc-500 mb-8">
-          공고별 기술 매칭 · 업무 연관도 · 경력 조건을 동시에 분석합니다.
-        </p>
-        <div className="w-full bg-white border border-zinc-100 rounded-2xl p-5 text-left shadow-sm">
-          {steps.map((step, idx) => {
-            const done = loadingStep > idx + 1;
-            const cur  = loadingStep === idx + 1;
-            return (
-              <div
-                key={idx}
-                className={`flex items-center gap-3 mb-3.5 transition-opacity duration-300 ${
-                  done || cur ? "opacity-100" : "opacity-35"
-                }`}
-              >
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 text-white"
-                  style={{
-                    background: done
-                      ? "linear-gradient(135deg, #10b981, #059669)"
-                      : cur
-                      ? "linear-gradient(135deg, #16A34A, #22C55E)"
-                      : "#e5e5e5",
-                    color: done || cur ? "white" : "#999",
-                  }}
-                >
-                  {done ? "✓" : idx + 1}
-                </div>
-                <span className={`text-xs ${cur ? "font-semibold text-zinc-900" : "text-zinc-500"}`}>
-                  {step}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // ── 결과 ───────────────────────────────────────────────────────────────────
-  if (result) {
-    return (
-      <div className="max-w-[900px] mx-auto">
-        <ResultView result={result} onReset={() => setResult(null)} />
-      </div>
-    );
-  }
+  const loadingSteps = [
+    "채용공고 URL 파싱 중...",
+    "이력서 기술 추출 중...",
+    "공고별 기술 · 도메인 · 경력 매칭 중...",
+    "AI 종합 평가 생성 중...",
+  ];
 
   // ── 입력 폼 ────────────────────────────────────────────────────────────────
   return (
@@ -706,8 +639,26 @@ export default function LeancageAnalysisTest() {
         </div>
       </div>
 
-      {/* 분석 시작 버튼 */}
-      <div className="flex justify-center mt-8 mb-2">
+      {/* 분석 시작 / 결과 보기 버튼 */}
+      <div className="flex justify-center gap-3 mt-8 mb-2">
+        {result && !loading && (
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 font-bold rounded-2xl transition-all duration-150"
+            style={{
+              background: "#ffffff",
+              border: "2px solid #16A34A",
+              color: "#16A34A",
+              boxShadow: "0 2px 12px rgba(22,163,74,0.15)",
+              fontSize: "1rem",
+              padding: "0.875rem 2rem",
+            }}
+          >
+            <BarChart2 size={18} />
+            결과 다시 보기
+          </button>
+        )}
         <button
           type="button"
           onClick={handleAnalyze}
@@ -723,6 +674,84 @@ export default function LeancageAnalysisTest() {
           이력서 × 공고 분석 시작
         </button>
       </div>
+
+      {/* 결과 / 로딩 모달 */}
+      {(loading || (result && isModalOpen)) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+        >
+          <div className="relative w-full max-w-[820px] bg-white rounded-l-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            {/* 결과 헤더 */}
+            {result && !loading && (
+              <div className="flex items-center justify-between px-8 pt-6 pb-4 border-b border-zinc-100 shrink-0">
+                <h2 className="text-lg font-bold text-zinc-900 m-0">이력서 - 채용공고 분석 상세 결과</h2>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-1.5 rounded-full hover:bg-zinc-100 transition-colors border-0 bg-transparent cursor-pointer ml-4 shrink-0"
+                >
+                  <X size={18} className="text-zinc-500" />
+                </button>
+              </div>
+            )}
+
+            <div className="overflow-y-auto flex-1 p-8">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <div className="relative mb-6 flex items-center justify-center">
+                    <div
+                      className="animate-spin rounded-full border-[3px] h-12 w-12"
+                      style={{ borderColor: "#F0FDF4", borderTopColor: "#16A34A" }}
+                    />
+                    <Sparkles size={18} className="absolute" style={{ color: "#16A34A" }} />
+                  </div>
+                  <h2 className="text-xl font-bold mb-2 text-zinc-900">이력서 × 채용공고 분석 중</h2>
+                  <p className="text-sm text-zinc-500 mb-8">
+                    공고별 기술 매칭 · 도메인 적합도 · 경력 조건을 동시에 분석합니다.
+                  </p>
+                  <div className="w-full max-w-[480px] bg-zinc-50 border border-zinc-100 rounded-2xl p-5 text-left">
+                    {loadingSteps.map((step, idx) => {
+                      const done = loadingStep > idx + 1;
+                      const cur  = loadingStep === idx + 1;
+                      return (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-3 mb-3.5 transition-opacity duration-300 ${
+                            done || cur ? "opacity-100" : "opacity-35"
+                          }`}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                            style={{
+                              background: done
+                                ? "linear-gradient(135deg, #10b981, #059669)"
+                                : cur
+                                ? "linear-gradient(135deg, #16A34A, #22C55E)"
+                                : "#e5e5e5",
+                              color: done || cur ? "white" : "#999",
+                            }}
+                          >
+                            {done ? "✓" : idx + 1}
+                          </div>
+                          <span className={`text-xs ${cur ? "font-semibold text-zinc-900" : "text-zinc-500"}`}>
+                            {step}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                result && (
+                  <div style={{ fontSize: "13.5px" }}>
+                    <ResultView result={result} />
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
