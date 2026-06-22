@@ -12,6 +12,46 @@ const client = axios.create({
 // ── 타입 정의 ──────────────────────────────────────────────────────────────
 
 // 타입 추가
+
+export interface MatchingSuccess {
+  status: "success";
+
+  url_index: number;
+
+  title: string;
+  company: string;
+  job_type: string;
+
+  confirmed_score: number;
+  inferred_score: number;
+
+  confirmed_matched: string[];
+  inferred_matched: string[];
+
+  missing: string[];
+
+  extra_confirmed: string[];
+}
+
+export interface MatchingFailed {
+  status: "failed";
+
+  url_index: number;
+  error: string;
+}
+
+export type MatchingResult = MatchingSuccess | MatchingFailed;
+
+export interface AnalyzeResponse {
+  github: GithubPreviewResponse;
+  matching: MatchingResult[];
+}
+
+// export interface AnalyzeResponse {
+//   github: GithubPreviewResponse;
+//   matching: MatchingResult[];
+// }
+
 export interface GithubPreviewResponse {
   username: string;
   confirmed_skills: string[];
@@ -177,6 +217,14 @@ export const api = {
     client
       .get<GithubPreviewResponse>("/github/preview", {
         params: { username },
+      })
+      .then((r) => r.data),
+
+  analyze: (githubUsername: string, jobUrls: string[]) =>
+    client
+      .post<AnalyzeResponse>("/analyze", {
+        github_username: githubUsername,
+        job_urls: jobUrls,
       })
       .then((r) => r.data),
 
