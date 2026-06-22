@@ -63,6 +63,8 @@ export default function App() {
             onResumeGithubResult={(r) => setResumeGithubResult(r)}
           />
         );
+      case "analysistest":
+        return <Analysistest />;
       case "resume-github-detail":
         return resumeGithubResult ? (
           <ResumeGithubDetail
