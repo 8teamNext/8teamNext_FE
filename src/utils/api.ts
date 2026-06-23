@@ -11,6 +11,40 @@ const client = axios.create({
 
 // ── 타입 정의 ──────────────────────────────────────────────────────────────
 
+export interface MatchingSuccess {
+  status: "success";
+  url_index: number;
+  title: string;
+  company: string;
+  job_type: string;
+  confirmed_score: number;
+  inferred_score: number;
+  confirmed_matched: string[];
+  inferred_matched: string[];
+  missing: string[];
+  extra_confirmed: string[];
+}
+
+export interface MatchingFailed {
+  status: "failed";
+  url_index: number;
+  error: string;
+}
+
+export type MatchingResult = MatchingSuccess | MatchingFailed;
+
+export interface GithubPreviewResponse {
+  username: string;
+  confirmed_skills: string[];
+  inferred_skills: string[];
+  raw_languages: Record<string, number>;
+}
+
+export interface AnalyzeResponse {
+  github: GithubPreviewResponse;
+  matching: MatchingResult[];
+}
+
 export interface RepoDetail {
   name: string;
   url: string;
@@ -112,7 +146,6 @@ export interface CoverLetterCompareResponse {
   remaining_gaps: string[];
 }
 
-// 크롤링 타입
 export interface CrawlSuccess {
   url_index: number;
   status: "success";
@@ -138,11 +171,27 @@ export interface CrawlResponse {
 // ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
-  // 채용공고 URL 크롤링
   crawlJobs: (urls: string[]): Promise<CrawlResponse> =>
     client.post<CrawlResponse>("/crawl", { urls }).then((r) => r.data),
 
-  // 종합 분석
+  getGithubPreview: (username: string): Promise<GithubPreviewResponse> =>
+    client
+      .get<GithubPreviewResponse>("/github/preview", {
+        params: { username },
+      })
+      .then((r) => r.data),
+
+  analyze: (
+    githubUsername: string,
+    jobUrls: string[],
+  ): Promise<AnalyzeResponse> =>
+    client
+      .post<AnalyzeResponse>("/analyze", {
+        github_username: githubUsername,
+        job_urls: jobUrls,
+      })
+      .then((r) => r.data),
+
   analyzeUnified: (
     githubUrl: string,
     resumeText: string,
@@ -156,13 +205,14 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // GitHub 분석
   analyzeGithub: (repoUrls: string[], jobUrls: string[]): Promise<any> =>
     client
-      .post("/analyze/github", { repo_urls: repoUrls, job_urls: jobUrls })
+      .post("/analyze/github", {
+        repo_urls: repoUrls,
+        job_urls: jobUrls,
+      })
       .then((r) => r.data),
 
-  // Gap 분석
   analyzeGap: (
     repoUrls: string[],
     resumeText: string,
@@ -176,7 +226,6 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 이력서-GitHub 연계 분석
   analyzeResumeGithub: (
     resumeText: string,
     resumeUrl: string | null,
@@ -192,7 +241,6 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 면접 질문 생성
   generateInterviewQuestions: (
     coverLetter: string,
     jobPosting?: string,
@@ -204,7 +252,6 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 자소서 비교
   compareCoverLetters: (
     originalText: string,
     improvedText: string,
@@ -216,19 +263,15 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 프로필 조회
   getProfile: (): Promise<UserProfile> =>
     client.get<UserProfile>("/profile").then((r) => r.data),
 
-  // 프로필 수정
   updateProfile: (profileData: UserProfile): Promise<UserProfile> =>
     client.post<UserProfile>("/profile", profileData).then((r) => r.data),
 
-  // 히스토리 조회
   getHistory: (): Promise<AnalysisHistoryItem[]> =>
     client.get<AnalysisHistoryItem[]>("/history").then((r) => r.data),
 
-  // 히스토리 삭제
   deleteHistoryItem: (
     id: string,
   ): Promise<{ status: string; message: string }> =>
