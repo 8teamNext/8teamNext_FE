@@ -11,38 +11,52 @@ const client = axios.create({
 
 // ── 타입 정의 ──────────────────────────────────────────────────────────────
 
+// 타입 추가
+
 export interface MatchingSuccess {
   status: "success";
+
   url_index: number;
+
   title: string;
   company: string;
   job_type: string;
+
   confirmed_score: number;
   inferred_score: number;
+
   confirmed_matched: string[];
   inferred_matched: string[];
+
   missing: string[];
+
   extra_confirmed: string[];
 }
 
 export interface MatchingFailed {
   status: "failed";
+
   url_index: number;
   error: string;
 }
 
 export type MatchingResult = MatchingSuccess | MatchingFailed;
 
+export interface AnalyzeResponse {
+  github: GithubPreviewResponse;
+  matching: MatchingResult[];
+}
+
+// export interface AnalyzeResponse {
+//   github: GithubPreviewResponse;
+//   matching: MatchingResult[];
+// }
+
 export interface GithubPreviewResponse {
   username: string;
   confirmed_skills: string[];
   inferred_skills: string[];
   raw_languages: Record<string, number>;
-}
-
-export interface AnalyzeResponse {
-  github: GithubPreviewResponse;
-  matching: MatchingResult[];
 }
 
 export interface RepoDetail {
@@ -54,6 +68,7 @@ export interface RepoDetail {
   stars: number;
   quality_score: number;
   description: string;
+  commit_count: number;
 }
 
 export interface RecommendedProject {
@@ -68,6 +83,7 @@ export interface RecommendedProject {
 
 export interface UnifiedGithubPart {
   repo_count: number;
+  total_commits: number;
   tech_stack: string[];
   readme_quality: string;
   project_completeness: string;
@@ -89,8 +105,26 @@ export interface UnifiedGapPart {
 }
 
 export interface UnifiedAnalysisResponse {
-  overall_score: number;
   portfolio_rating: string;
+  overall_match_pct: number;
+  skill_match_pct: number;
+  active_weeks: number;
+  total_commits: number;
+  repo_coverage_pct: number;
+  repo_count: number;
+  comparison_result: {
+    service: string;
+    overall_score: number;
+    metrics: { key: string; label: string; score: number; detail: string }[];
+    raw: {
+      active_weeks: number;
+      total_commits: number;
+      repo_count: number;
+      matched_skills: string[];
+      unmatched_skills: string[];
+    };
+    ai_comment: string;
+  };
   github_analysis: UnifiedGithubPart;
   resume_analysis: UnifiedResumePart;
   skill_gap: UnifiedGapPart;
@@ -168,12 +202,76 @@ export interface CrawlResponse {
   results: CrawlResult[];
 }
 
+// ── Leancage 분석 타입 ────────────────────────────────────────────────────
+
+export interface LeancageMetric {
+  key: string;
+  label: string;
+  score: number;
+  detail: string;
+}
+
+export interface LeancageJobComparison {
+  url: string;
+  company: string;
+  title: string;
+  job_type: string;
+  overall_score: number;
+  tech_score: number;
+  domain_score: number;
+  career_score: number;
+  matched_skills: string[];
+  missing_skills: string[];
+  extra_skills: string[];
+}
+
+export interface LeancageResult {
+  service: string;
+  overall_score: number;
+  metrics: LeancageMetric[];
+  raw: {
+    match_rate: number;
+    matched_skills: string[];
+    missing_skills: string[];
+    extra_skills: string[];
+    overall_evaluation: string;
+    career_level: string;
+  };
+  detail: {
+    resume_skills: string[];
+    job_required_skills: string[];
+    job_comparisons: LeancageJobComparison[];
+  };
+}
+// 이력서-GitHub 분석 결과 타입
+export interface ResumeGithubResponse {
+  overall_evaluation: string;
+  resume_skills: string[];
+  github_skills: string[];
+  verified_skills: string[];
+  unverified_skills: string[];
+  newly_discovered_skills: string[];
+  supplement_advice: string;   // LLM 이력서 보완 권고
+  update_suggestion: string;   // LLM 이력서 업데이트 제안
+}
+
 // ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
+  // 이력서-채용공고 비교 분석 (leancage)
+  analyzeLeancage: (resumeText: string, jobUrls: string[]): Promise<LeancageResult> =>
+    client
+      .post<LeancageResult>("/leancage/analyze", {
+        resume_text: resumeText,
+        job_urls: jobUrls,
+      })
+      .then((r) => r.data),
+
+  // 채용공고 URL 크롤링
   crawlJobs: (urls: string[]): Promise<CrawlResponse> =>
     client.post<CrawlResponse>("/crawl", { urls }).then((r) => r.data),
 
+  // 깃허브
   getGithubPreview: (username: string): Promise<GithubPreviewResponse> =>
     client
       .get<GithubPreviewResponse>("/github/preview", {
@@ -181,10 +279,7 @@ export const api = {
       })
       .then((r) => r.data),
 
-  analyze: (
-    githubUsername: string,
-    jobUrls: string[],
-  ): Promise<AnalyzeResponse> =>
+  analyze: (githubUsername: string, jobUrls: string[]) =>
     client
       .post<AnalyzeResponse>("/analyze", {
         github_username: githubUsername,
@@ -192,6 +287,7 @@ export const api = {
       })
       .then((r) => r.data),
 
+  // 종합 분석
   analyzeUnified: (
     githubUrl: string,
     resumeText: string,
