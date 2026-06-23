@@ -87,8 +87,17 @@ export interface InterviewQuestion {
   sample_answer: string;
 }
 
+export interface JobPostingAnalysis {
+  summary: string;
+  skills: string[];
+  extracted_requirements: string[];
+  matched: string[];
+  unmatched: string[];
+}
+
 export interface InterviewGenResponse {
   questions: InterviewQuestion[];
+  job_posting_analysis: JobPostingAnalysis | null;
 }
 
 export interface CoverLetterCompareResponse {
