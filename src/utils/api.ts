@@ -68,6 +68,7 @@ export interface RepoDetail {
   stars: number;
   quality_score: number;
   description: string;
+  commit_count: number;
 }
 
 export interface RecommendedProject {
@@ -82,6 +83,7 @@ export interface RecommendedProject {
 
 export interface UnifiedGithubPart {
   repo_count: number;
+  total_commits: number;
   tech_stack: string[];
   readme_quality: string;
   project_completeness: string;
@@ -103,8 +105,26 @@ export interface UnifiedGapPart {
 }
 
 export interface UnifiedAnalysisResponse {
-  overall_score: number;
   portfolio_rating: string;
+  overall_match_pct: number;
+  skill_match_pct: number;
+  active_weeks: number;
+  total_commits: number;
+  repo_coverage_pct: number;
+  repo_count: number;
+  comparison_result: {
+    service: string;
+    overall_score: number;
+    metrics: { key: string; label: string; score: number; detail: string }[];
+    raw: {
+      active_weeks: number;
+      total_commits: number;
+      repo_count: number;
+      matched_skills: string[];
+      unmatched_skills: string[];
+    };
+    ai_comment: string;
+  };
   github_analysis: UnifiedGithubPart;
   resume_analysis: UnifiedResumePart;
   skill_gap: UnifiedGapPart;
@@ -127,6 +147,7 @@ export interface AnalysisHistoryItem {
 
 export interface InterviewQuestion {
   id: number;
+  category: string;
   question: string;
   intent: string;
   suggested_keywords: string[];
@@ -134,8 +155,17 @@ export interface InterviewQuestion {
   sample_answer: string;
 }
 
+export interface JobPostingAnalysis {
+  summary: string;
+  skills: string[];
+  extracted_requirements: string[];
+  matched: string[];
+  unmatched: string[];
+}
+
 export interface InterviewGenResponse {
   questions: InterviewQuestion[];
+  job_posting_analysis: JobPostingAnalysis | null;
 }
 
 export interface CoverLetterCompareResponse {
@@ -150,7 +180,6 @@ export interface CoverLetterCompareResponse {
   remaining_gaps: string[];
 }
 
-// 크롤링 타입
 export interface CrawlSuccess {
   url_index: number;
   status: "success";
@@ -173,9 +202,71 @@ export interface CrawlResponse {
   results: CrawlResult[];
 }
 
+// ── Leancage 분석 타입 ────────────────────────────────────────────────────
+
+export interface LeancageMetric {
+  key: string;
+  label: string;
+  score: number;
+  detail: string;
+}
+
+export interface LeancageJobComparison {
+  url: string;
+  company: string;
+  title: string;
+  job_type: string;
+  overall_score: number;
+  tech_score: number;
+  domain_score: number;
+  career_score: number;
+  matched_skills: string[];
+  missing_skills: string[];
+  extra_skills: string[];
+}
+
+export interface LeancageResult {
+  service: string;
+  overall_score: number;
+  metrics: LeancageMetric[];
+  raw: {
+    match_rate: number;
+    matched_skills: string[];
+    missing_skills: string[];
+    extra_skills: string[];
+    overall_evaluation: string;
+    career_level: string;
+  };
+  detail: {
+    resume_skills: string[];
+    job_required_skills: string[];
+    job_comparisons: LeancageJobComparison[];
+  };
+}
+// 이력서-GitHub 분석 결과 타입
+export interface ResumeGithubResponse {
+  overall_evaluation: string;
+  resume_skills: string[];
+  github_skills: string[];
+  verified_skills: string[];
+  unverified_skills: string[];
+  newly_discovered_skills: string[];
+  supplement_advice: string;   // LLM 이력서 보완 권고
+  update_suggestion: string;   // LLM 이력서 업데이트 제안
+}
+
 // ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
+  // 이력서-채용공고 비교 분석 (leancage)
+  analyzeLeancage: (resumeText: string, jobUrls: string[]): Promise<LeancageResult> =>
+    client
+      .post<LeancageResult>("/leancage/analyze", {
+        resume_text: resumeText,
+        job_urls: jobUrls,
+      })
+      .then((r) => r.data),
+
   // 채용공고 URL 크롤링
   crawlJobs: (urls: string[]): Promise<CrawlResponse> =>
     client.post<CrawlResponse>("/crawl", { urls }).then((r) => r.data),
@@ -210,13 +301,14 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // GitHub 분석
   analyzeGithub: (repoUrls: string[], jobUrls: string[]): Promise<any> =>
     client
-      .post("/analyze/github", { repo_urls: repoUrls, job_urls: jobUrls })
+      .post("/analyze/github", {
+        repo_urls: repoUrls,
+        job_urls: jobUrls,
+      })
       .then((r) => r.data),
 
-  // Gap 분석
   analyzeGap: (
     repoUrls: string[],
     resumeText: string,
@@ -230,7 +322,6 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 이력서-GitHub 연계 분석
   analyzeResumeGithub: (
     resumeText: string,
     resumeUrl: string | null,
@@ -246,17 +337,17 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 면접 질문 생성
   generateInterviewQuestions: (
     coverLetter: string,
+    jobPosting?: string,
   ): Promise<InterviewGenResponse> =>
     client
       .post<InterviewGenResponse>("/analyze/interview-questions", {
         cover_letter: coverLetter,
+        job_posting: jobPosting ?? "",
       })
       .then((r) => r.data),
 
-  // 자소서 비교
   compareCoverLetters: (
     originalText: string,
     improvedText: string,
@@ -268,19 +359,15 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 프로필 조회
   getProfile: (): Promise<UserProfile> =>
     client.get<UserProfile>("/profile").then((r) => r.data),
 
-  // 프로필 수정
   updateProfile: (profileData: UserProfile): Promise<UserProfile> =>
     client.post<UserProfile>("/profile", profileData).then((r) => r.data),
 
-  // 히스토리 조회
   getHistory: (): Promise<AnalysisHistoryItem[]> =>
     client.get<AnalysisHistoryItem[]>("/history").then((r) => r.data),
 
-  // 히스토리 삭제
   deleteHistoryItem: (
     id: string,
   ): Promise<{ status: string; message: string }> =>

@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import {
   Sparkles,
   Github,
+  GitBranch,
   FileText,
   CheckCircle2,
   AlertTriangle,
@@ -21,14 +22,16 @@ import {
   BarChart2,
   ArrowRight,
 } from "lucide-react";
-import { api, UnifiedAnalysisResponse, UserProfile } from "../utils/api";
+import { api, UnifiedAnalysisResponse, UserProfile, ResumeGithubResponse } from "../utils/api";
+import { ResumeGithubModal } from "./ResumeGithubDetail";
 
 interface AnalysisProps {
   user?: UserProfile | null;
   setCurrentPage?: (page: string) => void;
+  onResumeGithubResult?: (result: ResumeGithubResponse) => void;
 }
 
-export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
+export default function Analysis({ user, setCurrentPage, onResumeGithubResult }: AnalysisProps) {
   const [resumeText, setResumeText] = useState("");
   const [originalResumeText, setOriginalResumeText] = useState("");
   const [jobUrls, setJobUrls] = useState<string[]>([""]);
@@ -45,11 +48,13 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
   } | null>(null);
   const [validating, setValidating] = useState(false);
 
+  // 이력서-GitHub 분석 결과 & 모달
+  const [resumeGithubResult, setResumeGithubResult] = useState<ResumeGithubResponse | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
   // 등록된 채용공고
   const [registeredUrls, setRegisteredUrls] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState("");
-  const [showSampleResult, setShowSampleResult] = useState(false);
-
   // FileUpload inline state
   const [isDragActive, setIsDragActive] = useState(false);
   const [fileInfo, setFileInfo] = useState<{ name: string; size: string } | null>(null);
@@ -59,9 +64,6 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
   const loadFileRef = useRef<HTMLInputElement>(null);
 
   const githubUsername = user?.github_username || "";
-  const githubUrl = githubUsername
-    ? `https://github.com/${githubUsername}`
-    : "https://github.com/kimcoding-dev/book-rental-service";
 
   // ── 채용공고 URL 등록 ──────────────────────────────────
   const handleRegisterUrl = () => {
@@ -186,12 +188,14 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
   const handleUpdateJobUrl = (i: number, v: string) => { const u = [...jobUrls]; u[i] = v; setJobUrls(u); };
 
   // ── 분석 시작 ─────────────────────────────────────────
-  const handleStartAnalysis = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStartAnalysis = async () => {
+    if (!githubUsername) {
+      setError("GitHub 계정이 설정되지 않았습니다. 마이페이지에서 GitHub 계정명을 먼저 등록해주세요.");
+      return;
+    }
     if (!resumeText.trim()) { setError("이력서 텍스트를 입력하거나 파일을 업로드해 주세요."); return; }
-    const filteredJobs = jobUrls.filter((u) => u.trim());
-    if (filteredJobs.length === 0) { setError("채용공고 URL을 최소 하나 입력해주세요."); return; }
 
+    // 이력서 검증
     setValidating(true);
     let validation = resumeValidation;
     try {
@@ -204,32 +208,32 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
     } catch { /* 네트워크 오류 시 통과 */ } finally { setValidating(false); }
     if (validation && !validation.valid) return;
 
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null);
     setLoadingStep(1);
     const timers = [
-      setTimeout(() => setLoadingStep(2), 1200),
-      setTimeout(() => setLoadingStep(3), 2400),
-      setTimeout(() => setLoadingStep(4), 3600),
+      setTimeout(() => setLoadingStep(2), 1000),
+      setTimeout(() => setLoadingStep(3), 2200),
     ];
     try {
-      const data = await api.analyzeUnified(githubUrl, resumeText, filteredJobs);
-      await new Promise((r) => setTimeout(r, 4000));
-      setResult(data);
+      const data = await api.analyzeResumeGithub(resumeText, null, githubUsername, []);
+      setResumeGithubResult(data);
+      onResumeGithubResult?.(data);
+      setShowDetailModal(true);
     } catch (err: any) {
       setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
       timers.forEach(clearTimeout);
       setLoading(false);
+      setLoadingStep(0);
     }
   };
 
   // ── Loading ────────────────────────────────────────────
   if (loading) {
     const steps = [
-      "GitHub 레포지토리 정보 및 소스코드 품질 스캔 중...",
-      "이력서 기재 기술과 깃허브 코드 구현 상호 대조 중...",
-      "채용 요구사항 기반 핵심 역량 Gap 분석 중...",
-      "부족 스택 극복을 위한 맞춤형 프로젝트 설계 및 로드맵 도출 중...",
+      "GitHub 레포지토리 기술 스택 스캔 중...",
+      "이력서 기재 기술과 GitHub 코드 상호 대조 중...",
+      "기술 정합성 분석 결과 생성 중...",
     ];
     return (
       <div className="flex flex-col items-center justify-center py-24 px-6 text-center max-w-[520px] mx-auto">
@@ -274,36 +278,93 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
 
   // ── 결과 렌더 (왼쪽 컬럼 안에서) ─────────────────────
   const ResultView = ({ r }: { r: UnifiedAnalysisResponse }) => {
-    const { overall_score, portfolio_rating, github_analysis, resume_analysis, skill_gap, recommended_projects } = r;
+    const { portfolio_rating, overall_match_pct, skill_match_pct, active_weeks, total_commits, repo_coverage_pct, repo_count, comparison_result, github_analysis, resume_analysis, skill_gap, recommended_projects } = r;
+    const ai_comment = comparison_result?.ai_comment ?? "";
+
+    const MetricBar = ({ pct, color }: { pct: number; color: string }) => (
+      <div className="w-full h-2 rounded-full bg-zinc-100 overflow-hidden mt-2">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    );
+
     return (
       <div className="flex flex-col gap-5">
-        {/* Score card */}
-        <div
-          className="rounded-2xl p-5 flex items-center gap-5"
-          style={{ background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
-        >
+        {/* 헤더: 전체 매칭 비율 */}
+        <div className="rounded-2xl px-5 py-4 flex items-center gap-5"
+          style={{ background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
           <div className="relative flex items-center justify-center shrink-0">
-            <svg width="64" height="64" viewBox="0 0 36 36">
+            <svg width="72" height="72" viewBox="0 0 36 36">
               <path className="fill-none stroke-white/10 stroke-[3]"
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <path
-                className="fill-none stroke-linecap-round transition-all duration-500"
-                style={{ stroke: '#22C55E', strokeWidth: '3', strokeDasharray: `${overall_score}, 100` }}
+              <path className="fill-none stroke-linecap-round transition-all duration-700"
+                style={{ stroke: '#22C55E', strokeWidth: '3', strokeDasharray: `${overall_match_pct}, 100` }}
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             </svg>
-            <span className="absolute text-[13px] font-extrabold text-white">{overall_score}점</span>
+            <span className="absolute text-[13px] font-extrabold text-white">{overall_match_pct}%</span>
           </div>
-          <div>
-            <div className="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">종합 스택 역량</div>
-            <div className="text-xl font-extrabold text-white leading-none mb-1">{portfolio_rating}</div>
-            <div className="text-xs text-zinc-400">AI 종합 분석 레포트</div>
+          <div className="flex-1">
+            <div className="text-[10px] text-zinc-400 uppercase tracking-widest mb-0.5">전체 매칭 비율</div>
+            <div className="text-lg font-extrabold text-white leading-none mb-1">{portfolio_rating}</div>
+            <div className="text-[10px] text-zinc-500">기술일치 · 커밋활동 · 레포커버리지 각 33.3% 동일 가중치</div>
           </div>
           <button
             onClick={() => setResult(null)}
-            className="ml-auto text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition border border-white/10"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition border border-white/10 shrink-0"
           >
             다시 분석
           </button>
+        </div>
+
+        {/* AI 총평 */}
+        {ai_comment && (
+          <div className="card">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={14} style={{ color: '#16A34A' }} />
+              <span className="text-[11px] font-bold text-zinc-600">AI 분석 총평</span>
+              <span className="ml-auto text-[10px] text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-full">GPT-4o-mini</span>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed m-0">{ai_comment}</p>
+          </div>
+        )}
+
+        {/* 3개 지표 카드 */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* 기술스택 일치도 */}
+          <div className="card">
+            <div className="flex items-center gap-2 mb-1">
+              <BarChart2 size={14} style={{ color: '#16A34A' }} />
+              <span className="text-[11px] font-bold text-zinc-600">기술스택 일치도</span>
+              <span className="ml-auto text-[10px] text-zinc-400">가중치 33.3%</span>
+            </div>
+            <div className="text-2xl font-extrabold text-zinc-900">{skill_match_pct}<span className="text-sm font-semibold text-zinc-400">%</span></div>
+            <MetricBar pct={skill_match_pct} color="#16A34A" />
+            <p className="text-[10px] text-zinc-400 mt-2 m-0">GitHub 기술 ↔ 이력서 기술 일치율</p>
+          </div>
+
+          {/* 깃 커밋 활동 */}
+          <div className="card">
+            <div className="flex items-center gap-2 mb-1">
+              <Activity size={14} style={{ color: '#2563EB' }} />
+              <span className="text-[11px] font-bold text-zinc-600">깃 커밋 활동</span>
+              <span className="ml-auto text-[10px] text-zinc-400">가중치 33.3%</span>
+            </div>
+            <div className="text-2xl font-extrabold text-zinc-900">{active_weeks}<span className="text-sm font-semibold text-zinc-400"> / 52주</span></div>
+            <MetricBar pct={Math.round(active_weeks / 52 * 100)} color="#2563EB" />
+            <p className="text-[10px] text-zinc-400 mt-2 m-0">총 커밋 {total_commits}회 · 최근 52주 활동</p>
+          </div>
+
+          {/* 레포 기술 커버리지 */}
+          <div className="card col-span-2">
+            <div className="flex items-center gap-2 mb-1">
+              <FileCheck size={14} style={{ color: '#D97706' }} />
+              <span className="text-[11px] font-bold text-zinc-600">레포 기술 커버리지</span>
+              <span className="ml-auto text-[10px] text-zinc-400">가중치 33.3%</span>
+            </div>
+            <div className="text-2xl font-extrabold text-zinc-900">{repo_coverage_pct}<span className="text-sm font-semibold text-zinc-400">%</span></div>
+            <MetricBar pct={repo_coverage_pct} color="#D97706" />
+            <p className="text-[10px] text-zinc-400 mt-2 m-0">이력서 기술이 사용된 레포 비율</p>
+          </div>
+
         </div>
 
         {/* GitHub Analysis */}
@@ -315,7 +376,15 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
             </div>
             <span className="badge badge-info">{github_analysis.repo_count}개 레포 스캔</span>
           </div>
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="bg-zinc-50 rounded-lg p-3">
+              <span className="text-[10px] text-zinc-400 block mb-1">분석 레포</span>
+              <span className="text-xs font-semibold text-zinc-900">{github_analysis.repo_count}개</span>
+            </div>
+            <div className="bg-zinc-50 rounded-lg p-3">
+              <span className="text-[10px] text-zinc-400 block mb-1">총 커밋 수</span>
+              <span className="text-xs font-semibold text-zinc-900">{github_analysis.total_commits}회</span>
+            </div>
             <div className="bg-zinc-50 rounded-lg p-3">
               <span className="text-[10px] text-zinc-400 block mb-1">README 상태</span>
               <span className="text-xs font-semibold text-zinc-900">{github_analysis.readme_quality}</span>
@@ -341,7 +410,17 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
                   </a>
                   <span className="badge badge-success">{repo.quality_score}점</span>
                 </div>
-                <p className="text-[11px] text-zinc-500 m-0">{repo.description}</p>
+                {repo.description && (
+                  <p className="text-[11px] text-zinc-500 m-0 mb-1.5">{repo.description}</p>
+                )}
+                <div className="flex items-center gap-3 text-[10px] text-zinc-400">
+                  <span>⭐ {repo.stars}</span>
+                  <span>커밋 {repo.commit_count}회</span>
+                  <span className="font-mono">{repo.primary_language}</span>
+                  <span className={`${repo.readme_status.startsWith("미흡") ? "text-red-400" : repo.readme_status === "보통" ? "text-amber-400" : "text-emerald-500"}`}>
+                    README {repo.readme_status}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -498,7 +577,7 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
               <Github size={14} className="text-white" />
             </div>
             {githubUsername ? (
-              <a href={githubUrl} target="_blank" rel="noopener noreferrer"
+              <a href={githubUsername ? `https://github.com/${githubUsername}` : "#"} target="_blank" rel="noopener noreferrer"
                 className="text-xs font-semibold text-zinc-700 hover:underline flex items-center gap-1">
                 @{githubUsername}<ExternalLink size={10} className="text-zinc-400" />
               </a>
@@ -718,11 +797,11 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
         </div>
       </div>
 
-      {/* ── 분석 시작하기 버튼 (가운데) ── */}
-      <div className="flex justify-center mt-8 mb-2">
+      {/* ── 분석 시작하기 버튼 ── */}
+      <div className="flex flex-col items-center gap-3 mt-8 mb-2">
         <button
           type="button"
-          onClick={() => setShowSampleResult(true)}
+          onClick={handleStartAnalysis}
           className="flex items-center gap-3 text-white font-bold rounded-2xl transition-all duration-150"
           style={{
             background: 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)',
@@ -734,76 +813,29 @@ export default function Analysis({ user, setCurrentPage }: AnalysisProps) {
           <Sparkles size={22} />
           분석 시작하기
         </button>
+
+        {/* 이전 분석 결과 상세보기 버튼 (분석 완료 후 표시) */}
+        {resumeGithubResult && (
+          <button
+            type="button"
+            onClick={() => setShowDetailModal(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold py-1.5 px-4 rounded-xl border cursor-pointer transition-all"
+            style={{ background: '#F0FDF4', borderColor: 'rgba(22,163,74,0.25)', color: '#15803D' }}
+          >
+            <GitBranch size={13} />
+            이력서·GitHub 분석 상세보기
+          </button>
+        )}
       </div>
 
-      {/* ── 샘플 결과 ── */}
-      {showSampleResult && (
-        <div className="mt-8 flex flex-col gap-4">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-bold text-zinc-800 m-0 flex items-center gap-2">
-              <BarChart2 size={16} style={{ color: '#16A34A' }} /> 분석 결과 (샘플)
-            </h3>
-            <button onClick={() => setShowSampleResult(false)}
-              className="text-xs text-zinc-400 hover:text-zinc-600 border-0 bg-transparent cursor-pointer">닫기</button>
-          </div>
-
-          {/* Score card */}
-          <div className="rounded-2xl p-5 flex items-center gap-5"
-            style={{ background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
-            <div className="relative flex items-center justify-center shrink-0">
-              <svg width="64" height="64" viewBox="0 0 36 36">
-                <path className="fill-none stroke-white/10 stroke-[3]"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path className="fill-none stroke-linecap-round"
-                  style={{ stroke: '#22C55E', strokeWidth: '3', strokeDasharray: '78, 100' }}
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              </svg>
-              <span className="absolute text-[13px] font-extrabold text-white">78점</span>
-            </div>
-            <div>
-              <div className="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">종합 스택 역량</div>
-              <div className="text-xl font-extrabold text-white leading-none mb-1">우수 (B+)</div>
-              <div className="text-xs text-zinc-400">AI 종합 분석 레포트 (샘플)</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="card">
-              <div className="flex items-center gap-2 mb-3">
-                <Github size={15} className="text-zinc-700" />
-                <h4 className="text-xs font-bold text-zinc-900 m-0">GitHub 분석</h4>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {["Java", "Spring Boot", "MySQL", "Docker"].map(t => (
-                  <span key={t} className="badge badge-info">{t}</span>
-                ))}
-              </div>
-              <p className="text-[11px] text-zinc-500 mt-3 m-0">레포지토리 8개 분석 완료. README 품질 보통.</p>
-            </div>
-            <div className="card">
-              <div className="flex items-center gap-2 mb-3">
-                <FileCheck size={15} className="text-zinc-700" />
-                <h4 className="text-xs font-bold text-zinc-900 m-0">이력서 검증</h4>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {["Java", "Spring Boot"].map(t => <span key={t} className="badge badge-success">{t}</span>)}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {["AWS", "Kubernetes"].map(t => <span key={t} className="badge badge-warning">{t}</span>)}
-              </div>
-            </div>
-            <div className="card">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity size={15} className="text-zinc-700" />
-                <h4 className="text-xs font-bold text-zinc-900 m-0">보완 필요 기술</h4>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {["AWS", "Kubernetes", "Redis"].map(t => <span key={t} className="badge badge-danger">{t}</span>)}
-              </div>
-              <p className="text-[11px] text-zinc-500 mt-3 m-0">클라우드/인프라 역량 보강을 권장합니다.</p>
-            </div>
-          </div>
-        </div>
+      {/* ── 이력서-GitHub 상세 모달 ── */}
+      {resumeGithubResult && (
+        <ResumeGithubModal
+          result={resumeGithubResult}
+          githubUsername={githubUsername}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+        />
       )}
     </div>
   );

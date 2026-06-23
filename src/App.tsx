@@ -4,15 +4,20 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Analysis from "./pages/Analysis";
 import Analysistest from "./pages/Analysis_test";
+import LeancageAnalysisTest from "./pages/leancageAnalysis_test";
+import ResumeGithubDetail from "./pages/ResumeGithubDetail";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
-import { UserProfile, api } from "./utils/api";
+import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("analysistest");
+  // const [currentPage, setCurrentPage] = useState<string>("leancage-test");
   // const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [resumeGithubResult, setResumeGithubResult] =
+    useState<ResumeGithubResponse | null>(null);
 
   useEffect(() => {
     api
@@ -53,9 +58,33 @@ export default function App() {
           />
         );
       case "analysis":
-        return <Analysis user={user} setCurrentPage={setCurrentPage} />;
+        return (
+          <Analysis
+            user={user}
+            setCurrentPage={setCurrentPage}
+            onResumeGithubResult={(r) => setResumeGithubResult(r)}
+          />
+        );
       case "analysistest":
         return <Analysistest />;
+      case "resume-github-detail":
+        return resumeGithubResult ? (
+          <ResumeGithubDetail
+            result={resumeGithubResult}
+            githubUsername={user?.github_username || ""}
+            onBack={() => setCurrentPage("analysis")}
+          />
+        ) : (
+          <Analysis
+            user={user}
+            setCurrentPage={setCurrentPage}
+            onResumeGithubResult={(r) => setResumeGithubResult(r)}
+          />
+        );
+      case "analysistest":
+        return <Analysistest />;
+      case "leancage-test":
+        return <LeancageAnalysisTest />;
       case "interview":
         return <MockInterview />;
       case "dashboard":
