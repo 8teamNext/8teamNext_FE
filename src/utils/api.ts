@@ -147,6 +147,7 @@ export interface AnalysisHistoryItem {
 
 export interface InterviewQuestion {
   id: number;
+  category: string;
   question: string;
   intent: string;
   suggested_keywords: string[];
@@ -154,8 +155,17 @@ export interface InterviewQuestion {
   sample_answer: string;
 }
 
+export interface JobPostingAnalysis {
+  summary: string;
+  skills: string[];
+  extracted_requirements: string[];
+  matched: string[];
+  unmatched: string[];
+}
+
 export interface InterviewGenResponse {
   questions: InterviewQuestion[];
+  job_posting_analysis: JobPostingAnalysis | null;
 }
 
 export interface CoverLetterCompareResponse {
@@ -170,7 +180,6 @@ export interface CoverLetterCompareResponse {
   remaining_gaps: string[];
 }
 
-// 크롤링 타입
 export interface CrawlSuccess {
   url_index: number;
   status: "success";
@@ -292,13 +301,14 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // GitHub 분석
   analyzeGithub: (repoUrls: string[], jobUrls: string[]): Promise<any> =>
     client
-      .post("/analyze/github", { repo_urls: repoUrls, job_urls: jobUrls })
+      .post("/analyze/github", {
+        repo_urls: repoUrls,
+        job_urls: jobUrls,
+      })
       .then((r) => r.data),
 
-  // Gap 분석
   analyzeGap: (
     repoUrls: string[],
     resumeText: string,
@@ -312,7 +322,6 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 이력서-GitHub 연계 분석
   analyzeResumeGithub: (
     resumeText: string,
     resumeUrl: string | null,
@@ -328,17 +337,17 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 면접 질문 생성
   generateInterviewQuestions: (
     coverLetter: string,
+    jobPosting?: string,
   ): Promise<InterviewGenResponse> =>
     client
       .post<InterviewGenResponse>("/analyze/interview-questions", {
         cover_letter: coverLetter,
+        job_posting: jobPosting ?? "",
       })
       .then((r) => r.data),
 
-  // 자소서 비교
   compareCoverLetters: (
     originalText: string,
     improvedText: string,
@@ -350,19 +359,15 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // 프로필 조회
   getProfile: (): Promise<UserProfile> =>
     client.get<UserProfile>("/profile").then((r) => r.data),
 
-  // 프로필 수정
   updateProfile: (profileData: UserProfile): Promise<UserProfile> =>
     client.post<UserProfile>("/profile", profileData).then((r) => r.data),
 
-  // 히스토리 조회
   getHistory: (): Promise<AnalysisHistoryItem[]> =>
     client.get<AnalysisHistoryItem[]>("/history").then((r) => r.data),
 
-  // 히스토리 삭제
   deleteHistoryItem: (
     id: string,
   ): Promise<{ status: string; message: string }> =>
