@@ -8,12 +8,14 @@ import {
   Search,
   ExternalLink,
   FileCheck,
-  Layers,
   Building2,
   Briefcase,
   CheckCircle2,
   XCircle,
   PlusCircle,
+  FolderOpen,
+  Save,
+  CheckCircle,
 } from "lucide-react";
 import {
   api,
@@ -22,6 +24,24 @@ import {
   MatchingFailed,
   AnalyzeResponse,
 } from "../utils/api";
+
+// ── localStorage 그룹 저장/불러오기 ──────────────────────────────────────
+const GROUPS = ["A", "B", "C"] as const;
+type Group = (typeof GROUPS)[number];
+const STORAGE_KEY = (g: Group) => `job_urls_group_${g}`;
+
+export function saveGroup(group: Group, urls: string[]) {
+  localStorage.setItem(STORAGE_KEY(group), JSON.stringify(urls));
+}
+
+export function loadGroup(group: Group): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(group));
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function Analysistest() {
   const [githubUsername, setGithubUsername] = useState("");
@@ -33,6 +53,12 @@ export default function Analysistest() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // 저장/불러오기 모달 상태
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group>("A");
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+
   // ── URL 등록 ──────────────────────────────────────────
   const handleRegisterUrl = () => {
     if (!urlInput.trim()) return;
@@ -42,10 +68,44 @@ export default function Analysistest() {
     }
     setRegisteredUrls([...registeredUrls, urlInput.trim()]);
     setUrlInput("");
+    setError(null);
   };
 
   const handleRemoveRegistered = (i: number) => {
     setRegisteredUrls(registeredUrls.filter((_, idx) => idx !== i));
+  };
+
+  // ── 저장하기 ──────────────────────────────────────────
+  const handleSave = () => {
+    if (registeredUrls.length === 0) {
+      setError("저장할 채용공고 URL이 없습니다.");
+      return;
+    }
+    setShowSaveModal(true);
+  };
+
+  const handleSaveConfirm = () => {
+    saveGroup(selectedGroup, registeredUrls);
+    setShowSaveModal(false);
+    setSaveNotice(`그룹 ${selectedGroup}에 저장되었습니다.`);
+    setTimeout(() => setSaveNotice(null), 2500);
+  };
+
+  // ── 불러오기 ──────────────────────────────────────────
+  const handleLoad = () => {
+    setShowLoadModal(true);
+  };
+
+  const handleLoadConfirm = () => {
+    const urls = loadGroup(selectedGroup);
+    if (urls.length === 0) {
+      setShowLoadModal(false);
+      setError(`그룹 ${selectedGroup}에 저장된 URL이 없습니다.`);
+      return;
+    }
+    setRegisteredUrls(urls);
+    setShowLoadModal(false);
+    setError(null);
   };
 
   // ── 분석 시작 ─────────────────────────────────────────
@@ -115,9 +175,7 @@ export default function Analysistest() {
             return (
               <div
                 key={idx}
-                className={`flex items-center gap-3 mb-3.5 transition-opacity duration-300 ${
-                  done || cur ? "opacity-100" : "opacity-35"
-                }`}
+                className={`flex items-center gap-3 mb-3.5 transition-opacity duration-300 ${done || cur ? "opacity-100" : "opacity-35"}`}
               >
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
@@ -260,166 +318,172 @@ export default function Analysistest() {
 
         {/* 매칭 결과 공고별 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {successMatching.map((r) => (
-            <div
-              key={r.url_index}
-              className="bg-white rounded-2xl p-5 border"
-              style={{
-                borderColor: "#eaeaea",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-              }}
-            >
-              {/* 공고 헤더 */}
-              <div className="mb-4 pb-3 border-b border-zinc-100">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h3 className="text-sm font-bold text-zinc-900">
-                    {r.title || "제목 없음"}
-                  </h3>
-                  <span className="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full shrink-0 font-mono">
-                    #{r.url_index + 1}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-3 mt-1">
-                  {r.company && (
-                    <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                      <Building2 size={11} /> {r.company}
-                    </span>
-                  )}
-                  {r.job_type && (
-                    <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                      <Briefcase size={11} /> {r.job_type}
-                    </span>
-                  )}
-                </div>
-              </div>
+          {successMatching.map((r) => {
+            const totalScore = Math.min(
+              Math.round((r.confirmed_score + r.inferred_score) * 10) / 10,
+              100,
+            );
 
-              {/* 매칭 점수 */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
+            return (
+              <div
+                key={r.url_index}
+                className="bg-white rounded-2xl p-5 border"
+                style={{
+                  borderColor: "#eaeaea",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+                }}
+              >
+                {/* 공고 헤더 */}
+                <div className="mb-4 pb-3 border-b border-zinc-100">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <h3 className="text-sm font-bold text-zinc-900">
+                      {r.title || "제목 없음"}
+                    </h3>
+                    <span className="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full shrink-0 font-mono">
+                      #{r.url_index + 1}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 mt-1">
+                    {r.company && (
+                      <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+                        <Building2 size={11} /> {r.company}
+                      </span>
+                    )}
+                    {r.job_type && (
+                      <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+                        <Briefcase size={11} /> {r.job_type}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 합산 매칭 점수 */}
                 <div
-                  className="rounded-xl p-3 text-center"
+                  className="rounded-xl p-4 text-center mb-4"
                   style={{
-                    background: "#F0FDF4",
+                    background: "linear-gradient(135deg, #F0FDF4, #EFF6FF)",
+                    // background:
+                    //   "linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%)",
                     border: "1px solid rgba(22,163,74,0.15)",
                   }}
                 >
                   <div
-                    className="text-xl font-extrabold"
-                    style={{ color: "#16A34A" }}
+                    className="text-3xl font-extrabold mb-0.5"
+                    style={{
+                      color:
+                        totalScore >= 70
+                          ? "#16A34A"
+                          : totalScore >= 50
+                            ? "#F59E0B"
+                            : "#EF4444",
+                    }}
                   >
-                    {r.confirmed_score}%
+                    {totalScore}%
                   </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">
-                    확인된 기술 매칭
+                  <div className="text-[10px] text-zinc-500">
+                    전체 기술 매칭률
+                  </div>
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    <span className="text-[10px]" style={{ color: "#16A34A" }}>
+                      확인 {r.confirmed_score}%
+                    </span>
+                    <span className="text-zinc-300 text-[10px]">+</span>
+                    <span className="text-[10px]" style={{ color: "#2563EB" }}>
+                      추론 {r.inferred_score}%
+                    </span>
                   </div>
                 </div>
-                <div
-                  className="rounded-xl p-3 text-center"
-                  style={{
-                    background: "#EFF6FF",
-                    border: "1px solid rgba(37,99,235,0.15)",
-                  }}
-                >
-                  <div
-                    className="text-xl font-extrabold"
-                    style={{ color: "#2563EB" }}
-                  >
-                    {r.inferred_score}%
+
+                {/* 매칭된 기술 */}
+                {(r.confirmed_matched.length > 0 ||
+                  r.inferred_matched.length > 0) && (
+                  <div className="mb-3">
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                      <CheckCircle2 size={11} className="text-green-500" />{" "}
+                      매칭된 기술
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.confirmed_matched.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#F0FDF4",
+                            color: "#16A34A",
+                            border: "1px solid rgba(22,163,74,0.2)",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                      {r.inferred_matched.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#EFF6FF",
+                            color: "#2563EB",
+                            border: "1px solid rgba(37,99,235,0.2)",
+                          }}
+                        >
+                          {s} · 추론
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">
-                    추론된 기술 매칭
+                )}
+
+                {/* 부족한 기술 */}
+                {r.missing.length > 0 && (
+                  <div className="mb-3">
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                      <XCircle size={11} className="text-red-400" /> 부족한 기술
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.missing.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#FEF2F2",
+                            color: "#DC2626",
+                            border: "1px solid rgba(220,38,38,0.2)",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* 추가 보유 기술 */}
+                {r.extra_confirmed.length > 0 && (
+                  <div>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                      <PlusCircle size={11} className="text-zinc-400" /> 추가
+                      보유 기술
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.extra_confirmed.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#F4F4F5",
+                            color: "#71717A",
+                            border: "1px solid rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* 매칭된 기술 */}
-              {(r.confirmed_matched.length > 0 ||
-                r.inferred_matched.length > 0) && (
-                <div className="mb-3">
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
-                    <CheckCircle2 size={11} className="text-green-500" /> 매칭된
-                    기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {r.confirmed_matched.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#F0FDF4",
-                          color: "#16A34A",
-                          border: "1px solid rgba(22,163,74,0.2)",
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                    {r.inferred_matched.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#EFF6FF",
-                          color: "#2563EB",
-                          border: "1px solid rgba(37,99,235,0.2)",
-                        }}
-                      >
-                        {s} · 추론
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 부족한 기술 */}
-              {r.missing.length > 0 && (
-                <div className="mb-3">
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
-                    <XCircle size={11} className="text-red-400" /> 부족한 기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {r.missing.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#FEF2F2",
-                          color: "#DC2626",
-                          border: "1px solid rgba(220,38,38,0.2)",
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 추가 보유 기술 */}
-              {r.extra_confirmed.length > 0 && (
-                <div>
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
-                    <PlusCircle size={11} className="text-zinc-400" /> 추가 보유
-                    기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {r.extra_confirmed.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#F4F4F5",
-                          color: "#71717A",
-                          border: "1px solid rgba(0,0,0,0.08)",
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -498,6 +562,39 @@ export default function Analysistest() {
             }}
           >
             <Plus size={13} /> 등록
+          </button>
+        </div>
+
+        {/* 불러오기 / 저장하기 버튼 */}
+        <div className="flex items-center gap-2 mt-2">
+          {saveNotice && (
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600">
+              <CheckCircle size={12} /> {saveNotice}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleLoad}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all"
+            style={{
+              background: "#F0FDF4",
+              borderColor: "rgba(22,163,74,0.2)",
+              color: "#16A34A",
+            }}
+          >
+            <FolderOpen size={13} /> 불러오기
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all text-white"
+            style={{
+              background: "linear-gradient(135deg, #16A34A, #22C55E)",
+              borderColor: "transparent",
+              boxShadow: "0 2px 6px rgba(22,163,74,0.25)",
+            }}
+          >
+            <Save size={13} /> 저장하기
           </button>
         </div>
       </div>
@@ -590,6 +687,153 @@ export default function Analysistest() {
           <Sparkles size={22} /> 분석 시작하기
         </button>
       </div>
+
+      {/* ── 저장하기 모달 ── */}
+      {showSaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.35)" }}
+          onClick={() => setShowSaveModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-80 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-bold text-zinc-900 mb-1">그룹 선택</h3>
+            <p className="text-xs text-zinc-500 mb-4">
+              현재 등록된 URL {registeredUrls.length}개를 저장할 그룹을
+              선택하세요.
+              <br />
+              그룹당 최대 5개 저장 가능합니다.
+            </p>
+            <div className="flex gap-2 mb-5">
+              {GROUPS.map((g) => {
+                const saved = loadGroup(g);
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setSelectedGroup(g)}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all"
+                    style={{
+                      background:
+                        selectedGroup === g
+                          ? "linear-gradient(135deg, #16A34A, #22C55E)"
+                          : "#fafafa",
+                      color: selectedGroup === g ? "white" : "#555",
+                      borderColor:
+                        selectedGroup === g ? "transparent" : "#eaeaea",
+                    }}
+                  >
+                    그룹 {g}
+                    {saved.length > 0 && (
+                      <span className="block text-[9px] mt-0.5 opacity-70">
+                        {saved.length}개 저장됨
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(false)}
+                className="flex-1 py-2 rounded-xl text-xs font-semibold border"
+                style={{
+                  borderColor: "#eaeaea",
+                  color: "#555",
+                  background: "#fafafa",
+                }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveConfirm}
+                className="flex-1 py-2 rounded-xl text-xs font-bold text-white"
+                style={{
+                  background: "linear-gradient(135deg, #16A34A, #22C55E)",
+                }}
+              >
+                저장하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 불러오기 모달 ── */}
+      {showLoadModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.35)" }}
+          onClick={() => setShowLoadModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-80 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-bold text-zinc-900 mb-1">그룹 선택</h3>
+            <p className="text-xs text-zinc-500 mb-4">
+              불러올 그룹을 선택하세요.
+              <br />
+              현재 입력창의 URL은 선택한 그룹으로 덮어씌워집니다.
+            </p>
+            <div className="flex gap-2 mb-5">
+              {GROUPS.map((g) => {
+                const saved = loadGroup(g);
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setSelectedGroup(g)}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all"
+                    style={{
+                      background:
+                        selectedGroup === g
+                          ? "linear-gradient(135deg, #16A34A, #22C55E)"
+                          : "#fafafa",
+                      color: selectedGroup === g ? "white" : "#555",
+                      borderColor:
+                        selectedGroup === g ? "transparent" : "#eaeaea",
+                    }}
+                  >
+                    그룹 {g}
+                    <span className="block text-[9px] mt-0.5 opacity-70">
+                      {saved.length > 0 ? `${saved.length}개` : "비어있음"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowLoadModal(false)}
+                className="flex-1 py-2 rounded-xl text-xs font-semibold border"
+                style={{
+                  borderColor: "#eaeaea",
+                  color: "#555",
+                  background: "#fafafa",
+                }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleLoadConfirm}
+                className="flex-1 py-2 rounded-xl text-xs font-bold text-white"
+                style={{
+                  background: "linear-gradient(135deg, #16A34A, #22C55E)",
+                }}
+              >
+                불러오기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

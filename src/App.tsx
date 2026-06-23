@@ -10,8 +10,8 @@ import MyPage from "./pages/MyPage";
 import { UserProfile, api } from "./utils/api";
 
 export default function App() {
-  // const [currentPage, setCurrentPage] = useState<string>("analysistest");
-  const [currentPage, setCurrentPage] = useState<string>("home");
+  const [currentPage, setCurrentPage] = useState<string>("analysistest");
+  // const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
