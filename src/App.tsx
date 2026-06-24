@@ -100,21 +100,6 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {user !== null && !user.name && currentPage !== "mypage" && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-800 flex items-center justify-between gap-4">
-          <span>
-            프로필이 설정되지 않았습니다. 마이페이지에서 기본정보를
-            입력해주세요.
-          </span>
-          <button
-            onClick={() => setCurrentPage("mypage")}
-            className="shrink-0 font-semibold underline bg-transparent border-0 cursor-pointer text-amber-900 text-xs"
-          >
-            지금 설정하기
-          </button>
-        </div>
-      )}
-
       <main className="flex-1 max-w-[1160px] w-full mx-auto px-6 py-12">
         {renderPage()}
       </main>
