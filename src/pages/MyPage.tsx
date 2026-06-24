@@ -404,8 +404,8 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
   };
 
   return (
-    <div className="pb-12 px-4">
-      <div className="mb-8 border-b border-zinc-200 pb-5">
+    <div className="pb-12">
+      <div className="mb-6 border-b border-zinc-200 pb-5">
         <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5 font-sans">
           마이페이지
         </h1>
