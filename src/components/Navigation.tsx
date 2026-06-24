@@ -18,7 +18,7 @@ interface NavigationProps {
 
 function InfinityLogo() {
   return (
-    <svg width="34" height="18" viewBox="0 0 68 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="66" height="35" viewBox="0 0 68 36" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="infGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#16A34A"/>
@@ -36,7 +36,7 @@ function InfinityLogo() {
            C58,10 58,26 50,29
            C42,32 34,26 34,18 Z"
         stroke="url(#infGrad1)"
-        strokeWidth="3.5"
+        strokeWidth="5.5"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -55,30 +55,32 @@ export default function Navigation({ currentPage, setCurrentPage, user, onLogout
   ];
 
   return (
-    <header className="bg-white border-b border-zinc-100 sticky top-0 z-50 h-[56px] flex items-center shadow-sm">
-      <div className="max-w-[1200px] w-full mx-auto px-6 flex items-center justify-between">
+    <header className="bg-white border-b border-zinc-100 sticky top-0 z-50 h-[68px] flex items-center shadow-sm">
+      <div className="max-w-[1160px] w-full mx-auto px-6 flex items-center">
+        {/* 좌측 고정 영역 */}
         <div
-          className="flex items-center gap-2.5 cursor-pointer group"
+          className="flex items-center gap-1 cursor-pointer shrink-0 w-[140px]"
           onClick={() => setCurrentPage('home')}
         >
           <InfinityLogo />
-          <div className="flex flex-col leading-none">
-            <span className="text-[13px] font-extrabold text-zinc-900 tracking-tight">AI Career</span>
-            <span
-              className="text-[10px] font-bold tracking-widest uppercase"
-              style={{
-                background: 'linear-gradient(135deg, #16A34A, #22C55E)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Copilot
-            </span>
-          </div>
+          <span
+            style={{
+              background: 'linear-gradient(135deg, #0D7A35 0%, #16A34A 60%, #E5A020 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontSize: '24px',
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
+              display: 'inline-block',
+              width: '60px',
+            }}
+          >NEXT</span>
         </div>
 
-        <nav className="flex items-center gap-1">
+        {/* 중앙 네비게이션 — flex-1로 남은 공간 채운 뒤 내부 중앙 정렬 */}
+        <nav className="flex-1 flex items-center justify-center gap-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id || (item.id === 'analysis' && currentPage.startsWith('analysis'));
@@ -86,38 +88,37 @@ export default function Navigation({ currentPage, setCurrentPage, user, onLogout
               <button
                 key={item.id}
                 onClick={() => setCurrentPage(item.id)}
-                className={`flex items-center gap-1.5 bg-transparent border-0 py-1.5 px-3 rounded-lg cursor-pointer text-xs font-medium transition-all duration-150 ${
+                className={`flex items-center gap-1.5 border-0 py-2 px-4 rounded-lg cursor-pointer text-sm font-semibold transition-colors duration-150 ${
                   isActive
-                    ? 'text-white font-semibold'
-                    : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
+                    ? 'text-white'
+                    : 'bg-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
                 }`}
                 style={isActive ? {
                   background: 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)',
                   boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
                 } : undefined}
               >
-                <Icon size={13} className={isActive ? 'text-white' : 'text-zinc-400'} />
+                <Icon size={15} className={isActive ? 'text-white' : 'text-zinc-400'} />
                 <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        <div className="flex items-center">
+        {/* 우측 고정 영역 */}
+        <div className="flex items-center justify-end shrink-0 w-[140px]">
           {user ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onLogout}
-                className="bg-transparent border-0 cursor-pointer flex items-center p-1.5 rounded-lg hover:bg-zinc-50 transition duration-150"
-                title="로그아웃"
-              >
-                <LogOut size={14} className="text-zinc-400" />
-              </button>
-            </div>
+            <button
+              onClick={onLogout}
+              className="bg-transparent border-0 cursor-pointer flex items-center p-1.5 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
+              title="로그아웃"
+            >
+              <LogOut size={14} className="text-zinc-400" />
+            </button>
           ) : (
             <button
               onClick={() => setCurrentPage('login')}
-              className="text-white border-0 py-1.5 px-4 rounded-lg font-semibold text-xs cursor-pointer transition-all duration-150"
+              className="text-white border-0 py-1.5 px-4 rounded-lg font-semibold text-sm cursor-pointer transition-colors duration-150"
               style={{
                 background: 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)',
                 boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',

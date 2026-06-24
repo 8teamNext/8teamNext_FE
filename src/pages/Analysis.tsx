@@ -868,6 +868,13 @@ export default function Analysis({
   // ── Main Layout ────────────────────────────────────────
   return (
     <div className="max-w-[1200px] mx-auto">
+      
+      {/* ── 페이지 헤더 ── */}
+      <div className="mb-6 border-b border-zinc-200 pb-5">
+        <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5">AI 통합 분석</h1>
+        <p className="text-xs text-zinc-500 m-0">GitHub 레포지토리와 채용공고를 등록하면 이력서 기술 정합성 검증, 기술 Gap 분석, 맞춤형 보완 프로젝트 추천까지 한 번에 제공합니다.</p>
+      </div>
+
       {/* ── Top: 채용공고 URL 입력 + GitHub 아이콘 ── */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
