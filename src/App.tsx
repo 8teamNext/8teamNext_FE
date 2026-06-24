@@ -10,6 +10,7 @@ import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
 import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
+import ChatWidget from "./components/ChatWidget";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("analysistest");
@@ -136,6 +137,8 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      <ChatWidget user={user} />
     </div>
   );
 }
