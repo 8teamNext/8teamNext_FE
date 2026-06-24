@@ -112,7 +112,7 @@ export default function App() {
       <footer className="bg-white border-t border-zinc-200 py-5 mt-auto">
         <div className="max-w-[1160px] w-full mx-auto px-6 flex justify-between items-center flex-wrap gap-4">
           <p className="text-xs text-zinc-500 m-0">
-            © 2026 AI Career Copilot. All rights reserved.
+            © 2026 넥스트. All rights reserved.
           </p>
           <div className="flex gap-5">
             <a
