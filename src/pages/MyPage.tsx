@@ -83,18 +83,18 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
       setCoverLetter(user.default_cover_letter || "");
     }
   }, [user]);
-  //디버깅(채용공고 url)
-  // useEffect(() => {
-  //   console.log("A", loadGroup("A"));
-  //   console.log("B", loadGroup("B"));
-  //   console.log("C", loadGroup("C"));
 
-  //   setGroupUrls({
-  //     A: loadGroup("A"),
-  //     B: loadGroup("B"),
-  //     C: loadGroup("C"),
-  //   });
-  // }, []);
+  useEffect(() => {
+    // console.log("A", loadGroup("A"));
+    // console.log("B", loadGroup("B"));
+    // console.log("C", loadGroup("C"));
+    //디버깅(채용공고 url)
+    setGroupUrls({
+      A: loadGroup("A"),
+      B: loadGroup("B"),
+      C: loadGroup("C"),
+    });
+  }, []);
 
   // Fetch initial profile & history on mount
   useEffect(() => {
