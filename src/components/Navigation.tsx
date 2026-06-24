@@ -18,7 +18,7 @@ interface NavigationProps {
 
 function InfinityLogo() {
   return (
-    <svg width="44" height="24" viewBox="0 0 88 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="34" height="18" viewBox="0 0 68 36" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="infGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#16A34A"/>
@@ -26,57 +26,21 @@ function InfinityLogo() {
           <stop offset="65%" stopColor="#FFB347"/>
           <stop offset="100%" stopColor="#16A34A"/>
         </linearGradient>
-        <radialGradient id="eyeGlow" cx="50%" cy="40%" r="50%">
-          <stop offset="0%" stopColor="#ffffff"/>
-          <stop offset="100%" stopColor="#e0fce8"/>
-        </radialGradient>
       </defs>
-
-      {/* ∞ 몸통 */}
       <path
-        d="M44,22
-           C44,12 33,4 22,8
-           C11,12 11,32 22,36
-           C33,40 44,32 44,22
-           C44,12 55,4 66,8
-           C77,12 77,32 66,36
-           C55,40 44,32 44,22 Z"
+        d="M34,18
+           C34,10 26,4 18,7
+           C10,10 10,26 18,29
+           C26,32 34,26 34,18
+           C34,10 42,4 50,7
+           C58,10 58,26 50,29
+           C42,32 34,26 34,18 Z"
         stroke="url(#infGrad1)"
-        strokeWidth="4"
+        strokeWidth="3.5"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-
-      {/* 왼쪽 눈 흰자 */}
-      <ellipse cx="22" cy="20" rx="6" ry="6.5" fill="url(#eyeGlow)" opacity="0.95"/>
-      {/* 왼쪽 눈 홍채 */}
-      <circle cx="22" cy="20.5" r="3.8" fill="#16A34A"/>
-      {/* 왼쪽 눈 동공 */}
-      <circle cx="22.7" cy="20" r="2.1" fill="#0a2010"/>
-      {/* 왼쪽 눈 하이라이트 */}
-      <circle cx="24" cy="18.5" r="1.0" fill="white" opacity="0.9"/>
-      <circle cx="21.2" cy="22.2" r="0.5" fill="white" opacity="0.5"/>
-
-      {/* 오른쪽 눈 흰자 */}
-      <ellipse cx="66" cy="20" rx="6" ry="6.5" fill="url(#eyeGlow)" opacity="0.95"/>
-      {/* 오른쪽 눈 홍채 */}
-      <circle cx="66" cy="20.5" r="3.8" fill="#22C55E"/>
-      {/* 오른쪽 눈 동공 */}
-      <circle cx="66.7" cy="20" r="2.1" fill="#0a2010"/>
-      {/* 오른쪽 눈 하이라이트 */}
-      <circle cx="68" cy="18.5" r="1.0" fill="white" opacity="0.9"/>
-      <circle cx="65.2" cy="22.2" r="0.5" fill="white" opacity="0.5"/>
-
-      {/* 왼쪽 속눈썹 */}
-      <path d="M17,14.5 Q22,12 27,14.5" stroke="#16A34A" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
-      {/* 오른쪽 속눈썹 */}
-      <path d="M61,14.5 Q66,12 71,14.5" stroke="#22C55E" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
-
-      {/* 왼쪽 볼 홍조 */}
-      <ellipse cx="15" cy="25" rx="3.5" ry="2" fill="#FFB347" opacity="0.35"/>
-      {/* 오른쪽 볼 홍조 */}
-      <ellipse cx="73" cy="25" rx="3.5" ry="2" fill="#FFB347" opacity="0.35"/>
     </svg>
   );
 }
