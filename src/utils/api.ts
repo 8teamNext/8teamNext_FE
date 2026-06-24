@@ -152,7 +152,7 @@ export interface InterviewQuestion {
   intent: string;
   suggested_keywords: string[];
   sample_answer_tip: string;
-  sample_answer: string;
+  sample_answer?: string;
 }
 
 export interface JobPostingAnalysis {
@@ -166,6 +166,11 @@ export interface JobPostingAnalysis {
 export interface InterviewGenResponse {
   questions: InterviewQuestion[];
   job_posting_analysis: JobPostingAnalysis | null;
+}
+
+export interface FollowupResponse {
+  followup_question: string;
+  intent: string;
 }
 
 export interface CoverLetterCompareResponse {
@@ -358,11 +363,45 @@ export const api = {
   generateInterviewQuestions: (
     coverLetter: string,
     jobPosting?: string,
+    style?: string,
+    difficulty?: string,
   ): Promise<InterviewGenResponse> =>
     client
       .post<InterviewGenResponse>("/analyze/interview-questions", {
         cover_letter: coverLetter,
         job_posting: jobPosting ?? "",
+        style: style ?? "기본형",
+        difficulty: difficulty ?? "신입",
+      })
+      .then((r) => r.data),
+
+  generateSampleAnswer: (
+    question: string,
+    coverLetter: string,
+    intent: string,
+    suggestedKeywords: string[],
+    style?: string,
+    difficulty?: string,
+  ): Promise<{ sample_answer: string }> =>
+    client
+      .post<{ sample_answer: string }>("/analyze/sample-answer", {
+        question,
+        cover_letter: coverLetter,
+        intent,
+        suggested_keywords: suggestedKeywords,
+        style: style ?? "기본형",
+        difficulty: difficulty ?? "신입",
+      })
+      .then((r) => r.data),
+
+  generateFollowupQuestion: (
+    question: string,
+    userAnswer: string,
+  ): Promise<FollowupResponse> =>
+    client
+      .post<FollowupResponse>("/analyze/followup-question", {
+        question,
+        user_answer: userAnswer,
       })
       .then((r) => r.data),
 

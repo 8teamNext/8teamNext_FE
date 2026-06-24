@@ -117,9 +117,9 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
         onDrop={handleDrop}
         onClick={triggerInput}
         className={`border border-dashed rounded-lg p-8 text-center cursor-pointer transition duration-150 flex flex-col items-center justify-center ${
-          isDragActive 
-            ? 'border-black bg-zinc-50' 
-            : fileInfo 
+          isDragActive
+            ? 'border-black bg-zinc-50'
+            : fileInfo
               ? 'border-green-500 bg-green-50/50'
               : 'border-zinc-200 bg-white hover:border-zinc-300'
         }`}
@@ -131,7 +131,7 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
           onChange={handleChange}
           className="hidden"
         />
-        
+
         {extracting ? (
           <div className="flex flex-col items-center gap-1.5">
             <Loader2 size={32} className="text-green-500 animate-spin" />
