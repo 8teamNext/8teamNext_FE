@@ -65,13 +65,18 @@ export default function Analysis({ user, setCurrentPage, onResumeGithubResult }:
 
   const [githubUsername, setGithubUsername] = useState(user?.github_username || "");
 
-  // 마이페이지에서 저장된 이력서가 있으면 자동으로 채우기
+  // 마운트 시 항상 최신 프로필을 직접 API 호출해서 이력서 자동 채우기
   useEffect(() => {
-    if (user?.default_resume && !resumeText) {
-      setResumeText(user.default_resume);
-      setOriginalResumeText(user.default_resume);
-    }
-  }, [user?.default_resume]);
+    api.getProfile().then((profile) => {
+      if (profile.default_resume) {
+        setResumeText(profile.default_resume);
+        setOriginalResumeText(profile.default_resume);
+      }
+      if (profile.github_username && !githubUsername) {
+        setGithubUsername(profile.github_username);
+      }
+    }).catch(() => {});
+  }, []);
 
   // ── 채용공고 URL 등록 ──────────────────────────────────
   const handleRegisterUrl = () => {
