@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   Github,
@@ -63,7 +63,15 @@ export default function Analysis({ user, setCurrentPage, onResumeGithubResult }:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadFileRef = useRef<HTMLInputElement>(null);
 
-  const githubUsername = user?.github_username || "";
+  const [githubUsername, setGithubUsername] = useState(user?.github_username || "");
+
+  // 마이페이지에서 저장된 이력서가 있으면 자동으로 채우기
+  useEffect(() => {
+    if (user?.default_resume && !resumeText) {
+      setResumeText(user.default_resume);
+      setOriginalResumeText(user.default_resume);
+    }
+  }, [user?.default_resume]);
 
   // ── 채용공고 URL 등록 ──────────────────────────────────
   const handleRegisterUrl = () => {
@@ -576,19 +584,23 @@ export default function Analysis({ user, setCurrentPage, onResumeGithubResult }:
             <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#1a1a1a' }}>
               <Github size={14} className="text-white" />
             </div>
-            {githubUsername ? (
-              <a href={githubUsername ? `https://github.com/${githubUsername}` : "#"} target="_blank" rel="noopener noreferrer"
-                className="text-xs font-semibold text-zinc-700 hover:underline flex items-center gap-1">
-                @{githubUsername}<ExternalLink size={10} className="text-zinc-400" />
+            <input
+              type="text"
+              className="border-0 outline-none text-xs font-semibold text-zinc-700 bg-transparent w-32"
+              placeholder="GitHub 아이디 입력"
+              value={githubUsername}
+              onChange={(e) => setGithubUsername(e.target.value)}
+            />
+            {githubUsername && (
+              <a href={`https://github.com/${githubUsername}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={10} className="text-zinc-400 hover:text-zinc-600" />
               </a>
-            ) : (
-              <span className="text-xs text-zinc-400">GitHub 미연동</span>
             )}
             {setCurrentPage && (
               <button onClick={() => setCurrentPage('mypage')}
                 className="text-[10px] font-semibold px-2 py-0.5 rounded border-0 cursor-pointer"
                 style={{ background: '#F0FDF4', color: '#16A34A' }}>
-                {githubUsername ? '변경' : '설정'}
+                설정
               </button>
             )}
           </div>
