@@ -8,12 +8,14 @@ import {
   Search,
   ExternalLink,
   FileCheck,
-  Layers,
   Building2,
   Briefcase,
   CheckCircle2,
   XCircle,
   PlusCircle,
+  FolderOpen,
+  Save,
+  CheckCircle,
 } from "lucide-react";
 import {
   api,
@@ -22,6 +24,14 @@ import {
   MatchingFailed,
   AnalyzeResponse,
 } from "../utils/api";
+import Modal, { ModalActions } from "../components/Modal";
+import {
+  GROUPS,
+  Group,
+  saveGroup,
+  loadGroup,
+  GroupSelector,
+} from "../components/Group";
 
 export default function Analysistest() {
   const [githubUsername, setGithubUsername] = useState("");
@@ -33,6 +43,11 @@ export default function Analysistest() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group>("A");
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+
   // ── URL 등록 ──────────────────────────────────────────
   const handleRegisterUrl = () => {
     if (!urlInput.trim()) return;
@@ -42,10 +57,40 @@ export default function Analysistest() {
     }
     setRegisteredUrls([...registeredUrls, urlInput.trim()]);
     setUrlInput("");
+    setError(null);
   };
 
   const handleRemoveRegistered = (i: number) => {
     setRegisteredUrls(registeredUrls.filter((_, idx) => idx !== i));
+  };
+
+  // ── 저장하기 ──────────────────────────────────────────
+  const handleSave = () => {
+    if (registeredUrls.length === 0) {
+      setError("저장할 채용공고 URL이 없습니다.");
+      return;
+    }
+    setShowSaveModal(true);
+  };
+
+  const handleSaveConfirm = () => {
+    saveGroup(selectedGroup, registeredUrls);
+    setShowSaveModal(false);
+    setSaveNotice(`그룹 ${selectedGroup}에 저장되었습니다.`);
+    setTimeout(() => setSaveNotice(null), 2500);
+  };
+
+  // ── 불러오기 ──────────────────────────────────────────
+  const handleLoadConfirm = () => {
+    const urls = loadGroup(selectedGroup);
+    if (urls.length === 0) {
+      setShowLoadModal(false);
+      setError(`그룹 ${selectedGroup}에 저장된 URL이 없습니다.`);
+      return;
+    }
+    setRegisteredUrls(urls);
+    setShowLoadModal(false);
+    setError(null);
   };
 
   // ── 분석 시작 ─────────────────────────────────────────
@@ -62,7 +107,6 @@ export default function Analysistest() {
     setLoading(true);
     setError(null);
     setResult(null);
-
     setLoadingStep(1);
     const stepIntervals = [
       setTimeout(() => setLoadingStep(2), 1200),
@@ -90,7 +134,6 @@ export default function Analysistest() {
       "기술스택 키워드 추출 중...",
       "매칭 분석 중...",
     ];
-
     return (
       <div className="flex flex-col items-center justify-center py-24 px-6 text-center max-w-[520px] mx-auto">
         <div className="relative mb-6 flex items-center justify-center">
@@ -115,9 +158,7 @@ export default function Analysistest() {
             return (
               <div
                 key={idx}
-                className={`flex items-center gap-3 mb-3.5 transition-opacity duration-300 ${
-                  done || cur ? "opacity-100" : "opacity-35"
-                }`}
+                className={`flex items-center gap-3 mb-3.5 transition-opacity duration-300 ${done || cur ? "opacity-100" : "opacity-35"}`}
               >
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
@@ -157,7 +198,6 @@ export default function Analysistest() {
 
     return (
       <div className="max-w-[1200px] mx-auto">
-        {/* 헤더 */}
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-bold text-zinc-900">분석 결과</h1>
           <button
@@ -258,168 +298,167 @@ export default function Analysistest() {
           </div>
         )}
 
-        {/* 매칭 결과 공고별 카드 */}
+        {/* 매칭 결과 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {successMatching.map((r) => (
-            <div
-              key={r.url_index}
-              className="bg-white rounded-2xl p-5 border"
-              style={{
-                borderColor: "#eaeaea",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-              }}
-            >
-              {/* 공고 헤더 */}
-              <div className="mb-4 pb-3 border-b border-zinc-100">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h3 className="text-sm font-bold text-zinc-900">
-                    {r.title || "제목 없음"}
-                  </h3>
-                  <span className="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full shrink-0 font-mono">
-                    #{r.url_index + 1}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-3 mt-1">
-                  {r.company && (
-                    <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                      <Building2 size={11} /> {r.company}
+          {successMatching.map((r) => {
+            const totalScore = Math.min(
+              Math.round((r.confirmed_score + r.inferred_score) * 10) / 10,
+              100,
+            );
+            return (
+              <div
+                key={r.url_index}
+                className="bg-white rounded-2xl p-5 border"
+                style={{
+                  borderColor: "#eaeaea",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+                }}
+              >
+                <div className="mb-4 pb-3 border-b border-zinc-100">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <h3 className="text-sm font-bold text-zinc-900">
+                      {r.title || "제목 없음"}
+                    </h3>
+                    <span className="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full shrink-0 font-mono">
+                      #{r.url_index + 1}
                     </span>
-                  )}
-                  {r.job_type && (
-                    <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                      <Briefcase size={11} /> {r.job_type}
-                    </span>
-                  )}
+                  </div>
+                  <div className="flex flex-wrap gap-3 mt-1">
+                    {r.company && (
+                      <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+                        <Building2 size={11} /> {r.company}
+                      </span>
+                    )}
+                    {r.job_type && (
+                      <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+                        <Briefcase size={11} /> {r.job_type}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* 매칭 점수 */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
+                {/* 합산 점수 */}
                 <div
-                  className="rounded-xl p-3 text-center"
+                  className="rounded-xl p-4 text-center mb-4"
                   style={{
-                    background: "#F0FDF4",
+                    background: "linear-gradient(135deg, #F0FDF4, #EFF6FF)",
                     border: "1px solid rgba(22,163,74,0.15)",
                   }}
                 >
                   <div
-                    className="text-xl font-extrabold"
-                    style={{ color: "#16A34A" }}
+                    className="text-3xl font-extrabold mb-0.5"
+                    style={{
+                      color:
+                        totalScore >= 60
+                          ? "#16A34A"
+                          : totalScore >= 30
+                            ? "#2563EB"
+                            : "#DC2626",
+                    }}
                   >
-                    {r.confirmed_score}%
+                    {totalScore}%
                   </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">
-                    확인된 기술 매칭
+                  <div className="text-[10px] text-zinc-500">
+                    전체 기술 매칭률
+                  </div>
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    <span className="text-[10px]" style={{ color: "#16A34A" }}>
+                      확인 {r.confirmed_score}%
+                    </span>
+                    <span className="text-zinc-300 text-[10px]">+</span>
+                    <span className="text-[10px]" style={{ color: "#2563EB" }}>
+                      추론 {r.inferred_score}%
+                    </span>
                   </div>
                 </div>
-                <div
-                  className="rounded-xl p-3 text-center"
-                  style={{
-                    background: "#EFF6FF",
-                    border: "1px solid rgba(37,99,235,0.15)",
-                  }}
-                >
-                  <div
-                    className="text-xl font-extrabold"
-                    style={{ color: "#2563EB" }}
-                  >
-                    {r.inferred_score}%
+
+                {(r.confirmed_matched.length > 0 ||
+                  r.inferred_matched.length > 0) && (
+                  <div className="mb-3">
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                      <CheckCircle2 size={11} className="text-green-500" />{" "}
+                      매칭된 기술
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.confirmed_matched.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#F0FDF4",
+                            color: "#16A34A",
+                            border: "1px solid rgba(22,163,74,0.2)",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                      {r.inferred_matched.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#EFF6FF",
+                            color: "#2563EB",
+                            border: "1px solid rgba(37,99,235,0.2)",
+                          }}
+                        >
+                          {s} · 추론
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">
-                    추론된 기술 매칭
+                )}
+
+                {r.missing.length > 0 && (
+                  <div className="mb-3">
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                      <XCircle size={11} className="text-red-400" /> 부족한 기술
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.missing.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#FEF2F2",
+                            color: "#DC2626",
+                            border: "1px solid rgba(220,38,38,0.2)",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {r.extra_confirmed.length > 0 && (
+                  <div>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
+                      <PlusCircle size={11} className="text-zinc-400" /> 추가
+                      보유 기술
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.extra_confirmed.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{
+                            background: "#F4F4F5",
+                            color: "#71717A",
+                            border: "1px solid rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* 매칭된 기술 */}
-              {(r.confirmed_matched.length > 0 ||
-                r.inferred_matched.length > 0) && (
-                <div className="mb-3">
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
-                    <CheckCircle2 size={11} className="text-green-500" /> 매칭된
-                    기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {r.confirmed_matched.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#F0FDF4",
-                          color: "#16A34A",
-                          border: "1px solid rgba(22,163,74,0.2)",
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                    {r.inferred_matched.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#EFF6FF",
-                          color: "#2563EB",
-                          border: "1px solid rgba(37,99,235,0.2)",
-                        }}
-                      >
-                        {s} · 추론
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 부족한 기술 */}
-              {r.missing.length > 0 && (
-                <div className="mb-3">
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
-                    <XCircle size={11} className="text-red-400" /> 부족한 기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {r.missing.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#FEF2F2",
-                          color: "#DC2626",
-                          border: "1px solid rgba(220,38,38,0.2)",
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 추가 보유 기술 */}
-              {r.extra_confirmed.length > 0 && (
-                <div>
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wide mb-1.5">
-                    <PlusCircle size={11} className="text-zinc-400" /> 추가 보유
-                    기술
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {r.extra_confirmed.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background: "#F4F4F5",
-                          color: "#71717A",
-                          border: "1px solid rgba(0,0,0,0.08)",
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -428,7 +467,6 @@ export default function Analysistest() {
   // ── 입력 폼 ───────────────────────────────────────────
   return (
     <div className="max-w-[1200px] mx-auto">
-      {/* URL 입력 + GitHub 아이디 */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Search size={14} style={{ color: "#16A34A" }} />
@@ -437,7 +475,6 @@ export default function Analysistest() {
           </h2>
           <span className="text-[10px] text-zinc-400 font-mono">최대 5개</span>
           <div className="flex-1" />
-          {/* GitHub 아이디 입력 */}
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl border"
             style={{ background: "#fafafa", borderColor: "#eaeaea" }}
@@ -458,7 +495,6 @@ export default function Analysistest() {
           </div>
         </div>
 
-        {/* URL 입력창 */}
         <div
           className="flex items-center bg-white rounded-2xl px-4 py-2.5 transition-all duration-200"
           style={{
@@ -500,9 +536,41 @@ export default function Analysistest() {
             <Plus size={13} /> 등록
           </button>
         </div>
+
+        {/* 불러오기 / 저장하기 */}
+        <div className="flex items-center gap-2 mt-2">
+          {saveNotice && (
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600">
+              <CheckCircle size={12} /> {saveNotice}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowLoadModal(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all"
+            style={{
+              background: "#F0FDF4",
+              borderColor: "rgba(22,163,74,0.2)",
+              color: "#16A34A",
+            }}
+          >
+            <FolderOpen size={13} /> 불러오기
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all text-white"
+            style={{
+              background: "linear-gradient(135deg, #16A34A, #22C55E)",
+              borderColor: "transparent",
+              boxShadow: "0 2px 6px rgba(22,163,74,0.25)",
+            }}
+          >
+            <Save size={13} /> 저장하기
+          </button>
+        </div>
       </div>
 
-      {/* 에러 */}
       {error && (
         <div className="flex gap-2 bg-red-50 border border-red-100 rounded-xl p-3 text-red-800 text-xs mb-5">
           <AlertTriangle size={13} className="text-red-400 shrink-0 mt-0.5" />
@@ -510,7 +578,6 @@ export default function Analysistest() {
         </div>
       )}
 
-      {/* 등록된 채용공고 */}
       <div
         className="bg-white rounded-2xl p-5 border mb-6"
         style={{
@@ -527,7 +594,6 @@ export default function Analysistest() {
             ({registeredUrls.length}/5)
           </span>
         </div>
-
         {registeredUrls.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <Search size={28} className="text-zinc-200 mb-3" />
@@ -574,7 +640,6 @@ export default function Analysistest() {
         )}
       </div>
 
-      {/* 분석 버튼 */}
       <div className="flex justify-center mt-4 mb-2">
         <button
           type="button"
@@ -590,6 +655,38 @@ export default function Analysistest() {
           <Sparkles size={22} /> 분석 시작하기
         </button>
       </div>
+
+      {/* 저장하기 모달 */}
+      <Modal
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        title="그룹 선택"
+        description={`현재 등록된 URL ${registeredUrls.length}개를 저장할 그룹을 선택하세요. 그룹당 최대 5개 저장 가능합니다.`}
+        width={320}
+      >
+        <GroupSelector selected={selectedGroup} onChange={setSelectedGroup} />
+        <ModalActions
+          onCancel={() => setShowSaveModal(false)}
+          onConfirm={handleSaveConfirm}
+          confirmLabel="저장하기"
+        />
+      </Modal>
+
+      {/* 불러오기 모달 */}
+      <Modal
+        open={showLoadModal}
+        onClose={() => setShowLoadModal(false)}
+        title="그룹 선택"
+        description="불러올 그룹을 선택하세요. 현재 입력창의 URL은 선택한 그룹으로 덮어씌워집니다."
+        width={320}
+      >
+        <GroupSelector selected={selectedGroup} onChange={setSelectedGroup} />
+        <ModalActions
+          onCancel={() => setShowLoadModal(false)}
+          onConfirm={handleLoadConfirm}
+          confirmLabel="불러오기"
+        />
+      </Modal>
     </div>
   );
 }

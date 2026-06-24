@@ -12,11 +12,12 @@ import MyPage from "./pages/MyPage";
 import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 
 export default function App() {
-  // const [currentPage, setCurrentPage] = useState<string>("analysistest");
+  const [currentPage, setCurrentPage] = useState<string>("analysistest");
   // const [currentPage, setCurrentPage] = useState<string>("leancage-test");
-  const [currentPage, setCurrentPage] = useState<string>("home");
+  // const [currentPage, setCurrentPage] = useState<string>("home");
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [resumeGithubResult, setResumeGithubResult] = useState<ResumeGithubResponse | null>(null);
+  const [resumeGithubResult, setResumeGithubResult] =
+    useState<ResumeGithubResponse | null>(null);
 
   useEffect(() => {
     api
@@ -74,10 +75,14 @@ export default function App() {
             onBack={() => setCurrentPage("analysis")}
           />
         ) : (
-          <Analysis user={user} setCurrentPage={setCurrentPage} onResumeGithubResult={(r) => setResumeGithubResult(r)} />
+          <Analysis
+            user={user}
+            setCurrentPage={setCurrentPage}
+            onResumeGithubResult={(r) => setResumeGithubResult(r)}
+          />
         );
-      // case "analysistest":
-      //   return <Analysistest />;
+      case "analysistest":
+        return <Analysistest />;
       case "leancage-test":
         return <LeancageAnalysisTest />;
       case "interview":
