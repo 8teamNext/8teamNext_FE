@@ -55,7 +55,7 @@ export default function FileUpload({ accept = '.txt,.md,.pdf', onTextLoaded, pla
         try {
           const formData = new FormData();
           formData.append('file', file);
-          const res = await fetch('http://localhost:8000/api/parse-resume', {
+          const res = await fetch('/api/parse-resume', {
             method: 'POST',
             body: formData,
           });
