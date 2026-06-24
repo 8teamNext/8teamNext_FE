@@ -255,6 +255,24 @@ export interface ResumeGithubResponse {
   update_suggestion: string;   // LLM 이력서 업데이트 제안
 }
 
+// ── 챗봇 타입 ─────────────────────────────────────────────────────────────
+
+export interface ChatSession {
+  session_id: number;
+  owner_key: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  message_id: number;
+  session_id: number;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
 // ── API 함수 ───────────────────────────────────────────────────────────────
 
 export const api = {
@@ -373,5 +391,32 @@ export const api = {
   ): Promise<{ status: string; message: string }> =>
     client
       .delete<{ status: string; message: string }>(`/history/${id}`)
+      .then((r) => r.data),
+
+  // ── 챗봇 ─────────────────────────────────────────────────────────────
+  chatListSessions: (owner: string): Promise<ChatSession[]> =>
+    client.get<ChatSession[]>("/chat/sessions", { params: { owner } }).then((r) => r.data),
+
+  chatCreateSession: (owner: string, title?: string): Promise<ChatSession> =>
+    client.post<ChatSession>("/chat/sessions", { owner, title }).then((r) => r.data),
+
+  chatDeleteSession: (sessionId: number): Promise<void> =>
+    client.delete(`/chat/sessions/${sessionId}`).then(() => undefined),
+
+  chatRenameSession: (sessionId: number, title: string): Promise<void> =>
+    client.patch(`/chat/sessions/${sessionId}`, { title }).then(() => undefined),
+
+  chatGetMessages: (sessionId: number): Promise<ChatMessage[]> =>
+    client.get<ChatMessage[]>(`/chat/sessions/${sessionId}/messages`).then((r) => r.data),
+
+  chatSendMessage: (
+    sessionId: number,
+    content: string,
+  ): Promise<{ role: "assistant"; content: string }> =>
+    client
+      .post<{ role: "assistant"; content: string }>(
+        `/chat/sessions/${sessionId}/messages`,
+        { content },
+      )
       .then((r) => r.data),
 };
