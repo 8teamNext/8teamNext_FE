@@ -181,7 +181,7 @@ export default function Analysis({
     }
     setValidating(true);
     try {
-      const res = await fetch("http://localhost:8000/api/validate-resume", {
+      const res = await fetch("/api/validate-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -215,7 +215,7 @@ export default function Analysis({
         try {
           const fd = new FormData();
           fd.append("file", file);
-          const res = await fetch("http://localhost:8000/api/parse-resume", {
+          const res = await fetch("/api/parse-resume", {
             method: "POST",
             body: fd,
           });
@@ -294,7 +294,7 @@ export default function Analysis({
     setValidating(true);
     let validation = resumeValidation;
     try {
-      const res = await fetch("http://localhost:8000/api/validate-resume", {
+      const res = await fetch("/api/validate-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: resumeText }),

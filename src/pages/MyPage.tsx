@@ -127,7 +127,7 @@ export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
       try {
         const fd = new FormData();
         fd.append('file', file);
-        const res = await fetch('http://localhost:8000/api/parse-resume', { method: 'POST', body: fd });
+        const res = await fetch('/api/parse-resume', { method: 'POST', body: fd });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'PDF 추출 실패'); }
         const data = await res.json();
         return data.text as string;
