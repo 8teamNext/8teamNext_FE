@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   FileText,
@@ -203,6 +203,18 @@ export default function TotalAnalysis() {
   const [resumeText, setResumeText] = useState("");
   const [originalResumeText, setOriginalResumeText] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
+
+  useEffect(() => {
+    api.getProfile()
+      .then((profile) => {
+        if (profile.github_username) setGithubUsername(profile.github_username);
+        if (profile.default_resume) {
+          setResumeText(profile.default_resume);
+          setOriginalResumeText(profile.default_resume);
+        }
+      })
+      .catch(() => {});
+  }, []);
   const [urlInput, setUrlInput] = useState("");
   const [registeredUrls, setRegisteredUrls] = useState<string[]>([]);
 
