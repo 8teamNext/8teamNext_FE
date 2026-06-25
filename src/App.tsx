@@ -14,8 +14,8 @@ import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 import ChatWidget from "./components/ChatWidget";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<string>("total-analysis");
-  // const [currentPage, setCurrentPage] = useState<string>("analysistest"); //민정님
+  // const [currentPage, setCurrentPage] = useState<string>("total-analysis");
+  const [currentPage, setCurrentPage] = useState<string>("analysistest"); //민정님
   // const [currentPage, setCurrentPage] = useState<string>("leancage-test"); //팀장님
   // const [currentPage, setCurrentPage] = useState<string>("home"); //채란님
   const [user, setUser] = useState<UserProfile | null>(null);
