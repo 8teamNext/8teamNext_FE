@@ -20,7 +20,17 @@ import {
   Briefcase,
   XCircle,
   PlusCircle,
+  FolderOpen,
+  Save,
 } from "lucide-react";
+import Modal, { ModalActions } from "../components/Modal";
+import {
+  GROUPS,
+  Group,
+  saveGroup,
+  loadGroup,
+  GroupSelector,
+} from "../components/Group";
 import {
   api,
   AnalyzeResponse,
@@ -236,6 +246,12 @@ export default function TotalAnalysis() {
   const [resultJR, setResultJR] = useState<LeancageResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
+  const [resumeValidation, setResumeValidation] = useState<{ valid: boolean; reason?: string } | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group>("A");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   // ── 모달 ─────────────────────────────────────────────────────────────────
   const [modalRG, setModalRG] = useState(false);
@@ -286,6 +302,42 @@ export default function TotalAnalysis() {
     reader.readAsText(file);
   };
 
+  // ── 이력서 유효성 검증 ───────────────────────────────────────────────────
+  const validateResumeText = async (text: string) => {
+    if (!text.trim()) { setResumeValidation(null); return; }
+    setValidating(true);
+    try {
+      const res = await fetch("/api/validate-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      setResumeValidation(await res.json());
+    } catch {
+      setResumeValidation(null);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  // ── URL 그룹 저장/불러오기 ───────────────────────────────────────────────
+  const handleSave = () => {
+    if (registeredUrls.length === 0) { setFormError("저장할 채용공고 URL이 없습니다."); return; }
+    setShowSaveModal(true);
+  };
+  const handleSaveConfirm = () => {
+    saveGroup(selectedGroup, registeredUrls);
+    setShowSaveModal(false);
+    setSaveNotice(`그룹 ${selectedGroup}에 저장되었습니다.`);
+    setTimeout(() => setSaveNotice(null), 2000);
+  };
+  const handleLoadConfirm = () => {
+    const urls = loadGroup(selectedGroup);
+    if (urls.length === 0) { setShowLoadModal(false); setFormError(`그룹 ${selectedGroup}에 저장된 URL이 없습니다.`); return; }
+    setRegisteredUrls(urls);
+    setShowLoadModal(false);
+  };
+
   // ── URL 등록 ─────────────────────────────────────────────────────────────
   const handleRegisterUrl = () => {
     if (!urlInput.trim()) return;
@@ -303,6 +355,20 @@ export default function TotalAnalysis() {
     if (!githubUsername.trim()) { setFormError("GitHub 아이디를 입력해주세요."); return; }
     if (!resumeText.trim()) { setFormError("이력서를 입력하거나 파일을 업로드해주세요."); return; }
     if (registeredUrls.length === 0) { setFormError("채용공고 URL을 최소 하나 등록해주세요."); return; }
+
+    setValidating(true);
+    let validation = resumeValidation;
+    try {
+      const res = await fetch("/api/validate-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: resumeText }),
+      });
+      validation = await res.json();
+      setResumeValidation(validation);
+    } catch { /* 네트워크 오류 시 통과 */ }
+    finally { setValidating(false); }
+    if (validation && !validation.valid) return;
 
     setIsAnalyzing(true);
     setFormError(null);
@@ -1018,6 +1084,33 @@ export default function TotalAnalysis() {
             <Plus size={13} /> 등록
           </button>
         </div>
+        <div className="flex items-center gap-2 mt-2">
+          {saveNotice && (
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600">
+              <CheckCircle2 size={12} /> {saveNotice}
+            </span>
+          )}
+          <button type="button" onClick={() => setShowLoadModal(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer"
+            style={{ background: "#F0FDF4", borderColor: "rgba(22,163,74,0.2)", color: "#16A34A" }}>
+            <FolderOpen size={13} /> 불러오기
+          </button>
+          <button type="button" onClick={handleSave}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer text-white"
+            style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)", borderColor: "transparent", boxShadow: "0 2px 6px rgba(22,163,74,0.25)" }}>
+            <Save size={13} /> 저장하기
+          </button>
+        </div>
+        <Modal open={showSaveModal} onClose={() => setShowSaveModal(false)} title="그룹 선택"
+          description={`현재 등록된 URL ${registeredUrls.length}개를 저장할 그룹을 선택하세요.`} width={320}>
+          <GroupSelector selected={selectedGroup} onChange={setSelectedGroup} />
+          <ModalActions onCancel={() => setShowSaveModal(false)} onConfirm={handleSaveConfirm} confirmLabel="저장하기" />
+        </Modal>
+        <Modal open={showLoadModal} onClose={() => setShowLoadModal(false)} title="그룹 선택"
+          description="불러올 그룹을 선택하세요. 현재 URL은 선택한 그룹으로 덮어씌워집니다." width={320}>
+          <GroupSelector selected={selectedGroup} onChange={setSelectedGroup} />
+          <ModalActions onCancel={() => setShowLoadModal(false)} onConfirm={handleLoadConfirm} confirmLabel="불러오기" />
+        </Modal>
       </div>
 
       {formError && (
