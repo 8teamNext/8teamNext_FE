@@ -235,7 +235,7 @@ export default function Analysistest() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide block mb-2">
-                확인된 기술
+                검증된 기술 스택
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {github.confirmed_skills.map((skill) => (
@@ -256,7 +256,7 @@ export default function Analysistest() {
             {github.inferred_skills.length > 0 && (
               <div>
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide block mb-2">
-                  추론된 기술
+                  LLM 기반 추정 기술 스택
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {github.inferred_skills.map((skill) => (
@@ -363,11 +363,11 @@ export default function Analysistest() {
                   </div>
                   <div className="flex items-center justify-center gap-3 mt-2">
                     <span className="text-[10px]" style={{ color: "#16A34A" }}>
-                      확인 {r.confirmed_score}%
+                      검증된 기술 스택 {r.confirmed_score}%
                     </span>
                     <span className="text-zinc-300 text-[10px]">+</span>
                     <span className="text-[10px]" style={{ color: "#2563EB" }}>
-                      추론 {r.inferred_score}%
+                      LLM 기반 추정 기술 스택 {r.inferred_score}%
                     </span>
                   </div>
                 </div>
