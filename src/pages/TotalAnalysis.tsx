@@ -208,7 +208,11 @@ function JobGithubResultView({ result }: { result: AnalyzeResponse }) {
 }
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-export default function TotalAnalysis() {
+interface TotalAnalysisProps {
+  setCurrentPage?: (page: string) => void;
+}
+
+export default function TotalAnalysis({ setCurrentPage }: TotalAnalysisProps) {
   // ── 입력 ────────────────────────────────────────────────────────────────
   const [resumeText, setResumeText] = useState("");
   const [originalResumeText, setOriginalResumeText] = useState("");
@@ -1040,6 +1044,12 @@ export default function TotalAnalysis() {
   // ── 입력 폼 ───────────────────────────────────────────────────────────────
   return (
     <div className="max-w-[1200px] mx-auto">
+      {/* ── 페이지 헤더 ── */}
+      <div className="mb-6 border-b border-zinc-200 pb-5">
+        <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5">AI 통합 분석</h1>
+        <p className="text-xs text-zinc-500 m-0">GitHub 레포지토리와 채용공고를 등록하면 이력서 기술 정합성 검증, 기술 Gap 분석, 맞춤형 보완 프로젝트 추천까지 한 번에 제공합니다.</p>
+      </div>
+
       {/* URL 입력 바 */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
@@ -1054,11 +1064,24 @@ export default function TotalAnalysis() {
             </div>
             <input
               type="text"
-              className="border-0 outline-none text-xs font-semibold text-zinc-700 bg-transparent w-36"
+              className="border-0 outline-none text-xs font-semibold text-zinc-700 bg-transparent w-32"
               placeholder="GitHub 아이디 입력"
               value={githubUsername}
               onChange={(e) => setGithubUsername(e.target.value)}
             />
+            {githubUsername && (
+              <a href={`https://github.com/${githubUsername}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={10} className="text-zinc-400 hover:text-zinc-600" />
+              </a>
+            )}
+            {setCurrentPage && (
+              <button
+                onClick={() => setCurrentPage('mypage')}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded border-0 cursor-pointer"
+                style={{ background: '#F0FDF4', color: '#16A34A' }}>
+                {githubUsername ? '변경' : '설정'}
+              </button>
+            )}
           </div>
         </div>
 

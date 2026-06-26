@@ -87,7 +87,7 @@ export default function App() {
       case "analysistest":
         return <Analysistest />;
       case "total-analysis":
-        return <TotalAnalysis />;
+        return <TotalAnalysis setCurrentPage={setCurrentPage} />;
       case "leancage-test":
         return <LeancageAnalysisTest />;
       case "interview":
