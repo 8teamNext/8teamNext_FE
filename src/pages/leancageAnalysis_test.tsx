@@ -157,7 +157,7 @@ const JobCard = ({ job }: { job: LeancageJobComparison }) => {
 };
 
 // ── 결과 뷰 ──────────────────────────────────────────────────────────────────
-const ResultView = ({ result }: { result: LeancageResult }) => {
+export const ResultView = ({ result }: { result: LeancageResult }) => {
   const { overall_score, metrics, raw, detail } = result;
   const careerLabel = CAREER_LABEL[raw.career_level] ?? raw.career_level;
   const scoreColor =
