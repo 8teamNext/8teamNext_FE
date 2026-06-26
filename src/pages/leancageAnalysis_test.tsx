@@ -53,9 +53,9 @@ const ScoreBar = ({ score, color }: { score: number; color: string }) => (
 const JobCard = ({ job }: { job: LeancageJobComparison }) => {
   const [open, setOpen] = useState(false);
   const scoreColor =
-    job.overall_score >= 70 ? "#16A34A"
-    : job.overall_score >= 50 ? "#D97706"
-    : "#DC2626";
+    job.overall_score >= 80 ? "#16A34A"
+    : job.overall_score >= 50 ? "#F59E0B"
+    : "#EF4444";
 
   return (
     <div
@@ -160,6 +160,10 @@ const JobCard = ({ job }: { job: LeancageJobComparison }) => {
 export const ResultView = ({ result }: { result: LeancageResult }) => {
   const { overall_score, metrics, raw, detail } = result;
   const careerLabel = CAREER_LABEL[raw.career_level] ?? raw.career_level;
+  const scoreColor =
+    overall_score >= 80 ? "#16A34A"
+    : overall_score >= 50 ? "#F59E0B"
+    : "#EF4444";
 
   return (
     <div className="flex flex-col gap-5">
@@ -180,7 +184,7 @@ export const ResultView = ({ result }: { result: LeancageResult }) => {
             <path
               className="fill-none stroke-linecap-round transition-all duration-700"
               style={{
-                stroke: "#22C55E",
+                stroke: scoreColor,
                 strokeWidth: "3",
                 strokeDasharray: `${overall_score}, 100`,
               }}
