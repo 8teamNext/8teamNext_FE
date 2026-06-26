@@ -16,34 +16,6 @@ interface NavigationProps {
   onLogout: () => void;
 }
 
-function InfinityLogo() {
-  return (
-    <svg width="66" height="35" viewBox="0 0 68 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="infGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#16A34A"/>
-          <stop offset="35%" stopColor="#22C55E"/>
-          <stop offset="65%" stopColor="#FFB347"/>
-          <stop offset="100%" stopColor="#16A34A"/>
-        </linearGradient>
-      </defs>
-      <path
-        d="M34,18
-           C34,10 26,4 18,7
-           C10,10 10,26 18,29
-           C26,32 34,26 34,18
-           C34,10 42,4 50,7
-           C58,10 58,26 50,29
-           C42,32 34,26 34,18 Z"
-        stroke="url(#infGrad1)"
-        strokeWidth="5.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export default function Navigation({ currentPage, setCurrentPage, user, onLogout }: NavigationProps) {
   const menuItems = [
@@ -62,7 +34,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, onLogout
           className="flex items-center gap-1 cursor-pointer shrink-0 w-[140px]"
           onClick={() => setCurrentPage('home')}
         >
-          <InfinityLogo />
+          <img src="/logo.png" width={35} alt="" />
           <span
             style={{
               background: 'linear-gradient(135deg, #0D7A35 0%, #16A34A 60%, #E5A020 100%)',
