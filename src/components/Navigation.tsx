@@ -83,7 +83,9 @@ export default function Navigation({ currentPage, setCurrentPage, user, onLogout
         <nav className="flex-1 flex items-center justify-center gap-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.id || (item.id === 'analysis' && currentPage.startsWith('analysis'));
+            const isActive = currentPage === item.id
+              || (item.id === 'total-analysis' && (currentPage === 'analysis' || currentPage.startsWith('analysis')))
+              || (item.id === 'dashboard' && currentPage === 'dashboard');
             return (
               <button
                 key={item.id}
