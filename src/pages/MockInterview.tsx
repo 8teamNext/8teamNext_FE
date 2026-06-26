@@ -21,39 +21,60 @@ import { api, InterviewGenResponse, FollowupResponse } from '../utils/api';
 
 function CompactFileUpload({ onTextLoaded }: { onTextLoaded: (text: string) => void }) {
   const [fileName, setFileName] = React.useState<string | null>(null);
+  const [extracting, setExtracting] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const processFile = (file: File | undefined) => {
+  const processFile = async (file: File | undefined) => {
     if (!file) return;
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['txt', 'md'].includes(ext ?? '')) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (typeof e.target?.result === 'string') {
-        onTextLoaded(e.target.result);
+    if (!['txt', 'md', 'pdf'].includes(ext ?? '')) return;
+
+    if (ext === 'pdf') {
+      setExtracting(true);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/parse-resume', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('PDF 추출 실패');
+        const data = await res.json();
+        onTextLoaded(data.text);
         setFileName(file.name);
+      } catch {
+        // 실패 시 무시
+      } finally {
+        setExtracting(false);
       }
-    };
-    reader.readAsText(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (typeof e.target?.result === 'string') {
+          onTextLoaded(e.target.result);
+          setFileName(file.name);
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
     <div
-      onClick={() => inputRef.current?.click()}
+      onClick={() => !extracting && inputRef.current?.click()}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => { e.preventDefault(); processFile(e.dataTransfer.files[0]); }}
       className="flex items-center gap-2.5 px-3.5 py-2.5 border border-dashed border-zinc-200 rounded-lg cursor-pointer hover:border-zinc-300 hover:bg-zinc-50 transition mb-4"
     >
-      <input ref={inputRef} type="file" accept=".txt,.md" className="hidden"
+      <input ref={inputRef} type="file" accept=".txt,.md,.pdf" className="hidden"
         onChange={(e) => processFile(e.target.files?.[0])} />
       <Upload size={14} className="text-zinc-400 shrink-0" />
-      {fileName ? (
+      {extracting ? (
+        <span className="text-xs text-zinc-500">PDF 추출 중...</span>
+      ) : fileName ? (
         <>
           <span className="text-xs text-zinc-700 font-medium truncate">{fileName}</span>
           <span className="text-[10px] text-zinc-400 ml-auto shrink-0">클릭하여 변경</span>
         </>
       ) : (
-        <span className="text-xs text-zinc-500">자기소개서 파일 등록하기 <span className="text-zinc-400">(.txt / .md)</span></span>
+        <span className="text-xs text-zinc-500">자기소개서 파일 등록하기 <span className="text-zinc-400">(.txt / .md / .pdf)</span></span>
       )}
     </div>
   );
@@ -76,6 +97,14 @@ export default function MockInterview() {
   const [sampleAnswerLoading, setSampleAnswerLoading] = useState<Record<number, boolean>>({});
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, boolean>>({});
   const [loadingStep, setLoadingStep] = useState(0);
+
+  useEffect(() => {
+    api.getProfile()
+      .then((profile) => {
+        if (profile.default_cover_letter) setCoverLetter(profile.default_cover_letter);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!loading) { setLoadingStep(0); return; }
