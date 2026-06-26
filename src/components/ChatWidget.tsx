@@ -231,7 +231,7 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
   const headerAvatar: BotImageState = sending ? "thinking" : fabImage === "thinking" ? "basic" : fabImage;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-3">
+    <div className="fixed bottom-16 right-6 z-[9999] flex flex-col items-end gap-3">
 
       {/* ── 채팅 패널 ──────────────────────────────────────────────────── */}
       {isOpen && (
@@ -256,7 +256,7 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
                 <BotAvatar state={headerAvatar} size={26} />
               )}
               <span className="text-white font-semibold text-sm">
-                {showSessions ? "대화 목록" : "AI 도우미"}
+                {showSessions ? "대화 목록" : "NEXT CHATBOT"}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -284,8 +284,8 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
               /* 로그인 안내 */
               <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
                 <BotAvatar state="attention" size={72} />
-                <p className="text-sm text-zinc-500 leading-relaxed">
-                  AI 도우미를 사용하려면
+                <p className="text-sm text-zinc-800 leading-relaxed">
+                  CHATBOT을 사용하려면
                   <br />
                   마이페이지에서 GitHub 사용자명을
                   <br />
@@ -341,7 +341,7 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
                   <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
                     <BotAvatar state="hello" size={80} />
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      AI Career Copilot 사용법이나
+                      서비스 사용법이나
                       <br />
                       기능에 대해 물어보세요!
                     </p>
@@ -422,11 +422,11 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
           background: "#f0fdf4",
           boxShadow: "0 4px 20px rgba(22, 163, 74, 0.30)",
         }}
-        aria-label="AI 도우미"
+        aria-label="NEXT CHATBOT"
       >
         <img
           src={BOT_IMGS[fabImage]}
-          alt="AI 도우미"
+          alt="NEXT CHATBOT"
           className="w-12 h-12 object-contain"
           style={{ transition: "opacity 0.2s" }}
         />
