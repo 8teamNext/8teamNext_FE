@@ -50,7 +50,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, onLogout
     { id: 'home', label: '홈', icon: Compass },
     { id: 'total-analysis', label: '분석', icon: GitBranch },
     { id: 'interview', label: '모의 면접', icon: MessageSquare },
-    { id: 'dashboard', label: '대시보드', icon: LayoutDashboard },
+    { id: 'dashboard', label: '고객센터', icon: LayoutDashboard },
     { id: 'mypage', label: '마이페이지', icon: User },
   ];
 
