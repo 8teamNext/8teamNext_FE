@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Settings,
   History,
@@ -21,7 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Pencil,
-} from 'lucide-react';
+} from "lucide-react";
 
 import { api, UserProfile, AnalysisHistoryItem } from "../utils/api";
 import { Group, loadGroupName, saveGroupName } from "../components/Group";
@@ -37,7 +37,11 @@ interface MyPageProps {
   initialTab?: string;
 }
 
-export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProps) {
+export default function MyPage({
+  user,
+  onProfileUpdate,
+  initialTab,
+}: MyPageProps) {
   const [activeTab, setActiveTab] = useState(initialTab ?? "profile"); // profile, history
 
   //채용공고 저장
@@ -80,19 +84,28 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
   const [success, setSuccess] = useState<string | null>(null);
 
   // 이력서 파일업로드 상태
-  const [resumeFileInfo, setResumeFileInfo] = useState<{ name: string; size: string } | null>(null);
+  const [resumeFileInfo, setResumeFileInfo] = useState<{
+    name: string;
+    size: string;
+  } | null>(null);
   const [resumeFileError, setResumeFileError] = useState<string | null>(null);
   const [resumeExtracting, setResumeExtracting] = useState(false);
   const resumeFileRef = useRef<HTMLInputElement>(null);
 
   // 자소서 파일업로드 상태
-  const [coverFileInfo, setCoverFileInfo] = useState<{ name: string; size: string } | null>(null);
+  const [coverFileInfo, setCoverFileInfo] = useState<{
+    name: string;
+    size: string;
+  } | null>(null);
   const [coverFileError, setCoverFileError] = useState<string | null>(null);
   const [coverExtracting, setCoverExtracting] = useState(false);
   const coverFileRef = useRef<HTMLInputElement>(null);
 
   // 텍스트 추출 후 DB 자동 저장 (백엔드에서 암호화)
-  const saveTextToDb = async (newResumeText: string, newCoverLetter: string) => {
+  const saveTextToDb = async (
+    newResumeText: string,
+    newCoverLetter: string,
+  ) => {
     try {
       const updated = await api.updateProfile({
         name,
@@ -101,10 +114,10 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
         default_cover_letter: newCoverLetter,
       });
       onProfileUpdate(updated);
-      setSuccess('파일이 암호화되어 저장되었습니다.');
+      setSuccess("파일이 암호화되어 저장되었습니다.");
       setTimeout(() => setSuccess(null), 3000);
     } catch {
-      setError('파일 저장 중 오류가 발생했습니다.');
+      setError("파일 저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -114,48 +127,66 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
     setFileError: (e: string | null) => void,
     setExtracting: (b: boolean) => void,
   ): Promise<string | null> => {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['pdf', 'txt', 'md'].includes(ext ?? '')) {
-      setFileError('지원 형식: PDF, TXT, MD');
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["pdf", "txt", "md"].includes(ext ?? "")) {
+      setFileError("지원 형식: PDF, TXT, MD");
       setInfo(null);
       return null;
     }
-    setInfo({ name: file.name, size: (file.size / 1024).toFixed(1) + ' KB' });
+    setInfo({ name: file.name, size: (file.size / 1024).toFixed(1) + " KB" });
     setFileError(null);
 
-    if (ext === 'pdf') {
+    if (ext === "pdf") {
       setExtracting(true);
       try {
         const fd = new FormData();
-        fd.append('file', file);
-        const res = await fetch('/api/parse-resume', { method: 'POST', body: fd });
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'PDF 추출 실패'); }
+        fd.append("file", file);
+        const res = await fetch("/api/parse-resume", {
+          method: "POST",
+          body: fd,
+        });
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}));
+          throw new Error(e.detail || "PDF 추출 실패");
+        }
         const data = await res.json();
         return data.text as string;
       } catch (e: any) {
-        setFileError(e.message || 'PDF 추출 오류');
+        setFileError(e.message || "PDF 추출 오류");
         setInfo(null);
         return null;
-      } finally { setExtracting(false); }
+      } finally {
+        setExtracting(false);
+      }
     }
 
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = (ev) => resolve(ev.target?.result as string ?? null);
+      reader.onload = (ev) => resolve((ev.target?.result as string) ?? null);
       reader.onerror = () => resolve(null);
       reader.readAsText(file);
     });
   };
 
   const handleResumeFile = async (file: File) => {
-    const text = await extractText(file, setResumeFileInfo, setResumeFileError, setResumeExtracting);
+    const text = await extractText(
+      file,
+      setResumeFileInfo,
+      setResumeFileError,
+      setResumeExtracting,
+    );
     if (text === null) return;
     setResumeText(text);
     await saveTextToDb(text, coverLetter);
   };
 
   const handleCoverFile = async (file: File) => {
-    const text = await extractText(file, setCoverFileInfo, setCoverFileError, setCoverExtracting);
+    const text = await extractText(
+      file,
+      setCoverFileInfo,
+      setCoverFileError,
+      setCoverExtracting,
+    );
     if (text === null) return;
     setCoverLetter(text);
     await saveTextToDb(resumeText, text);
@@ -164,15 +195,15 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
   // user prop이 바뀌면 (App.tsx의 API fetch 완료 시) 폼 상태 동기화
   useEffect(() => {
     if (user) {
-      setName(user.name || '');
-      setGithubUsername(user.github_username || '');
-      setResumeText(user.default_resume || '');
-      setCoverLetter(user.default_cover_letter || '');
+      setName(user.name || "");
+      setGithubUsername(user.github_username || "");
+      setResumeText(user.default_resume || "");
+      setCoverLetter(user.default_cover_letter || "");
       if (user.default_resume && !resumeFileInfo) {
-        setResumeFileInfo({ name: '저장된 이력서', size: '암호화 저장됨' });
+        setResumeFileInfo({ name: "저장된 이력서", size: "암호화 저장됨" });
       }
       if (user.default_cover_letter && !coverFileInfo) {
-        setCoverFileInfo({ name: '저장된 자기소개서', size: '암호화 저장됨' });
+        setCoverFileInfo({ name: "저장된 자기소개서", size: "암호화 저장됨" });
       }
     }
   }, [user]);
@@ -196,14 +227,17 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
       try {
         const profileData = await api.getProfile();
         setName(profileData.name);
-        setGithubUsername(profileData.github_username ?? '');
-        setResumeText(profileData.default_resume ?? '');
-        setCoverLetter(profileData.default_cover_letter ?? '');
+        setGithubUsername(profileData.github_username ?? "");
+        setResumeText(profileData.default_resume ?? "");
+        setCoverLetter(profileData.default_cover_letter ?? "");
         if (profileData.default_resume) {
-          setResumeFileInfo({ name: '저장된 이력서', size: '암호화 저장됨' });
+          setResumeFileInfo({ name: "저장된 이력서", size: "암호화 저장됨" });
         }
         if (profileData.default_cover_letter) {
-          setCoverFileInfo({ name: '저장된 자기소개서', size: '암호화 저장됨' });
+          setCoverFileInfo({
+            name: "저장된 자기소개서",
+            size: "암호화 저장됨",
+          });
         }
       } catch (err) {
         setError("프로필 정보를 불러오는 중 오류가 발생했습니다.");
@@ -322,19 +356,14 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
     const cleaned = groupUrls[group].map((url) => url.trim()).filter(Boolean);
 
     saveGroup(group, cleaned);
-
     saveGroupName(group, groupNames[group].trim());
 
-    setDirtyGroups((prev) => ({
-      ...prev,
-      [group]: false,
-    }));
+    setDirtyGroups((prev) => ({ ...prev, [group]: false }));
 
-    setSuccess(`그룹 ${group} 저장 완료`);
+    // 수정: groupNames[group] 사용
+    setSuccess(`"${groupNames[group].trim() || `그룹 ${group}`}" 저장 완료`);
 
-    setTimeout(() => {
-      setSuccess(null);
-    }, 2000);
+    setTimeout(() => setSuccess(null), 2000);
   };
   //여기까지
   // console.log(localStorage.getItem("job_urls_group_A"));
@@ -514,69 +543,155 @@ export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProp
 
             {/* Resume & CV Storage */}
             <div className="bg-white border border-zinc-200 rounded-lg p-5 shadow-xs">
-              <h3 className="text-sm font-bold text-zinc-900 m-0 mb-0.5">기본 이력서 및 자기소개서</h3>
-              <p className="text-xs text-zinc-500 m-0 mb-5">파일을 업로드하면 암호화되어 저장되며, 분석 시 자동으로 불러옵니다.</p>
+              <h3 className="text-sm font-bold text-zinc-900 m-0 mb-0.5">
+                기본 이력서 및 자기소개서
+              </h3>
+              <p className="text-xs text-zinc-500 m-0 mb-5">
+                파일을 업로드하면 암호화되어 저장되며, 분석 시 자동으로
+                불러옵니다.
+              </p>
 
               {/* 이력서 업로드 */}
               <div className="form-group mb-5">
-                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">기본 이력서</label>
-                <input ref={resumeFileRef} type="file" accept=".txt,.md,.pdf" className="hidden"
-                  onChange={(e) => { if (e.target.files?.[0]) handleResumeFile(e.target.files[0]); }} />
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">
+                  기본 이력서
+                </label>
+                <input
+                  ref={resumeFileRef}
+                  type="file"
+                  accept=".txt,.md,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0])
+                      handleResumeFile(e.target.files[0]);
+                  }}
+                />
                 <div
                   onClick={() => resumeFileRef.current?.click()}
                   className="flex items-center gap-2.5 rounded-xl p-2.5 cursor-pointer transition-all duration-150 mb-2"
                   style={{
-                    border: `1.5px dashed ${resumeFileInfo ? '#10b981' : '#d1d5db'}`,
-                    background: resumeFileInfo ? '#f0fdf4' : '#fafafa',
+                    border: `1.5px dashed ${resumeFileInfo ? "#10b981" : "#d1d5db"}`,
+                    background: resumeFileInfo ? "#f0fdf4" : "#fafafa",
                   }}
                 >
                   {resumeExtracting ? (
-                    <><Loader2 size={16} className="animate-spin shrink-0 text-zinc-500" />
-                    <span className="text-xs text-zinc-600">PDF 추출 중...</span></>
+                    <>
+                      <Loader2
+                        size={16}
+                        className="animate-spin shrink-0 text-zinc-500"
+                      />
+                      <span className="text-xs text-zinc-600">
+                        PDF 추출 중...
+                      </span>
+                    </>
                   ) : resumeFileInfo ? (
-                    <><CheckCircle2 size={16} className="text-green-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-green-700 truncate">{resumeFileInfo.name}</div>
-                      <div className="text-[10px] text-zinc-400">{resumeFileInfo.size} · 클릭하여 변경</div>
-                    </div></>
+                    <>
+                      <CheckCircle2
+                        size={16}
+                        className="text-green-500 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-green-700 truncate">
+                          {resumeFileInfo.name}
+                        </div>
+                        <div className="text-[10px] text-zinc-400">
+                          {resumeFileInfo.size} · 클릭하여 변경
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <><Upload size={16} className="text-zinc-400 shrink-0" />
-                    <div><div className="text-xs font-semibold text-zinc-700">이력서 업로드 (PDF/TXT/MD)</div>
-                    <div className="text-[10px] text-zinc-400">{resumeText ? '파일 교체 또는 클릭' : '클릭하여 파일 선택'}</div></div></>
+                    <>
+                      <Upload size={16} className="text-zinc-400 shrink-0" />
+                      <div>
+                        <div className="text-xs font-semibold text-zinc-700">
+                          이력서 업로드 (PDF/TXT/MD)
+                        </div>
+                        <div className="text-[10px] text-zinc-400">
+                          {resumeText
+                            ? "파일 교체 또는 클릭"
+                            : "클릭하여 파일 선택"}
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
-                {resumeFileError && <p className="text-[11px] text-red-500 flex items-center gap-1"><AlertCircle size={11} />{resumeFileError}</p>}
+                {resumeFileError && (
+                  <p className="text-[11px] text-red-500 flex items-center gap-1">
+                    <AlertCircle size={11} />
+                    {resumeFileError}
+                  </p>
+                )}
               </div>
 
               {/* 자소서 업로드 */}
               <div className="form-group mb-0">
-                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">기본 자기소개서</label>
-                <input ref={coverFileRef} type="file" accept=".txt,.md,.pdf" className="hidden"
-                  onChange={(e) => { if (e.target.files?.[0]) handleCoverFile(e.target.files[0]); }} />
+                <label className="form-label block text-xs font-semibold text-zinc-900 uppercase tracking-wider mb-1.5">
+                  기본 자기소개서
+                </label>
+                <input
+                  ref={coverFileRef}
+                  type="file"
+                  accept=".txt,.md,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) handleCoverFile(e.target.files[0]);
+                  }}
+                />
                 <div
                   onClick={() => coverFileRef.current?.click()}
                   className="flex items-center gap-2.5 rounded-xl p-2.5 cursor-pointer transition-all duration-150 mb-2"
                   style={{
-                    border: `1.5px dashed ${coverFileInfo ? '#10b981' : '#d1d5db'}`,
-                    background: coverFileInfo ? '#f0fdf4' : '#fafafa',
+                    border: `1.5px dashed ${coverFileInfo ? "#10b981" : "#d1d5db"}`,
+                    background: coverFileInfo ? "#f0fdf4" : "#fafafa",
                   }}
                 >
                   {coverExtracting ? (
-                    <><Loader2 size={16} className="animate-spin shrink-0 text-zinc-500" />
-                    <span className="text-xs text-zinc-600">PDF 추출 중...</span></>
+                    <>
+                      <Loader2
+                        size={16}
+                        className="animate-spin shrink-0 text-zinc-500"
+                      />
+                      <span className="text-xs text-zinc-600">
+                        PDF 추출 중...
+                      </span>
+                    </>
                   ) : coverFileInfo ? (
-                    <><CheckCircle2 size={16} className="text-green-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-green-700 truncate">{coverFileInfo.name}</div>
-                      <div className="text-[10px] text-zinc-400">{coverFileInfo.size} · 클릭하여 변경</div>
-                    </div></>
+                    <>
+                      <CheckCircle2
+                        size={16}
+                        className="text-green-500 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-green-700 truncate">
+                          {coverFileInfo.name}
+                        </div>
+                        <div className="text-[10px] text-zinc-400">
+                          {coverFileInfo.size} · 클릭하여 변경
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <><Upload size={16} className="text-zinc-400 shrink-0" />
-                    <div><div className="text-xs font-semibold text-zinc-700">자기소개서 업로드 (PDF/TXT/MD)</div>
-                    <div className="text-[10px] text-zinc-400">{coverLetter ? '파일 교체 또는 클릭' : '클릭하여 파일 선택'}</div></div></>
+                    <>
+                      <Upload size={16} className="text-zinc-400 shrink-0" />
+                      <div>
+                        <div className="text-xs font-semibold text-zinc-700">
+                          자기소개서 업로드 (PDF/TXT/MD)
+                        </div>
+                        <div className="text-[10px] text-zinc-400">
+                          {coverLetter
+                            ? "파일 교체 또는 클릭"
+                            : "클릭하여 파일 선택"}
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
-                {coverFileError && <p className="text-[11px] text-red-500 flex items-center gap-1"><AlertCircle size={11} />{coverFileError}</p>}
+                {coverFileError && (
+                  <p className="text-[11px] text-red-500 flex items-center gap-1">
+                    <AlertCircle size={11} />
+                    {coverFileError}
+                  </p>
+                )}
               </div>
             </div>
           </div>
