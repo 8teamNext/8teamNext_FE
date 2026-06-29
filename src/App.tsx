@@ -9,13 +9,13 @@ import ResumeGithubDetail from "./pages/ResumeGithubDetail";
 import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
 import MyPage from "./pages/MyPage";
+import TotalAnalysis from "./pages/TotalAnalysis";
 import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 import ChatWidget from "./components/ChatWidget";
 
 export default function App() {
-  // const [currentPage, setCurrentPage] = useState<string>("leancage-test");
-  // const [currentPage, setCurrentPage] = useState<string>("home");
-  const [currentPage, setCurrentPage] = useState<string>("analysistest"); //민정님
+  const [currentPage, setCurrentPage] = useState<string>("total-analysis");
+  // const [currentPage, setCurrentPage] = useState<string>("analysistest"); //민정님
   // const [currentPage, setCurrentPage] = useState<string>("leancage-test"); //팀장님
   // const [currentPage, setCurrentPage] = useState<string>("home"); //채란님
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -86,6 +86,8 @@ export default function App() {
         );
       case "analysistest":
         return <Analysistest />;
+      case "total-analysis":
+        return <TotalAnalysis />;
       case "leancage-test":
         return <LeancageAnalysisTest />;
       case "interview":
