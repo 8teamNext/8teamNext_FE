@@ -8,7 +8,6 @@ import {
   FileText,
   AlertCircle,
   Clock,
-  ArrowRight,
   Activity,
   MessageSquare,
   Sparkles,
@@ -866,7 +865,7 @@ export default function MyPage({
 
                   {/* Right Actions */}
                   <div className="flex items-center gap-2 self-end md:self-auto shrink-0 border-t border-zinc-50 pt-3 md:border-0 md:pt-0">
-                    <button
+                    {/* <button
                       onClick={() => {
                         alert(
                           `해당 분석 레포트는 분석 결과 탭 또는 대시보드 페이지에서 상세하게 확인하실 수 있습니다.`,
@@ -875,7 +874,7 @@ export default function MyPage({
                       className="btn btn-secondary py-1.5 px-3 text-xs inline-flex items-center gap-1"
                     >
                       상세 보기 <ArrowRight size={12} />
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => handleDeleteHistory(item.id)}
                       className="bg-transparent border-0 cursor-pointer p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors duration-150 inline-flex items-center justify-center"
