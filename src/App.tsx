@@ -17,10 +17,10 @@ export default function App() {
   useEffect(()=>{
     window.scrollTo({top:0})
   })
-  const [currentPage, setCurrentPage] = useState<string>("total-analysis");
+  // const [currentPage, setCurrentPage] = useState<string>("total-analysis");
   // const [currentPage, setCurrentPage] = useState<string>("analysistest"); //민정님
   // const [currentPage, setCurrentPage] = useState<string>("leancage-test"); //팀장님
-  // const [currentPage, setCurrentPage] = useState<string>("home"); //채란님
+  const [currentPage, setCurrentPage] = useState<string>("home"); //채란님
   const [user, setUser] = useState<UserProfile | null>(null);
   const [resumeGithubResult, setResumeGithubResult] =
     useState<ResumeGithubResponse | null>(null);
