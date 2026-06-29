@@ -208,7 +208,11 @@ function JobGithubResultView({ result }: { result: AnalyzeResponse }) {
 }
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-export default function TotalAnalysis() {
+interface TotalAnalysisProps {
+  setCurrentPage?: (page: string) => void;
+}
+
+export default function TotalAnalysis({ setCurrentPage }: TotalAnalysisProps) {
   // ── 입력 ────────────────────────────────────────────────────────────────
   const [resumeText, setResumeText] = useState("");
   const [originalResumeText, setOriginalResumeText] = useState("");
@@ -221,6 +225,7 @@ export default function TotalAnalysis() {
         if (profile.default_resume) {
           setResumeText(profile.default_resume);
           setOriginalResumeText(profile.default_resume);
+          validateResumeText(profile.default_resume);
         }
       })
       .catch(() => {});
@@ -234,6 +239,7 @@ export default function TotalAnalysis() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── 분석 상태 ────────────────────────────────────────────────────────────
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -283,6 +289,8 @@ export default function TotalAnalysis() {
           const data = await res.json();
           setResumeText(data.text);
           setOriginalResumeText(data.text);
+          setResumeValidation(null);
+          validateResumeText(data.text);
         } catch (e: any) {
           setFileError(e.message || "PDF 추출 오류");
           setFileInfo(null);
@@ -297,6 +305,8 @@ export default function TotalAnalysis() {
       if (ev.target?.result && typeof ev.target.result === "string") {
         setResumeText(ev.target.result);
         setOriginalResumeText(ev.target.result);
+        setResumeValidation(null);
+        validateResumeText(ev.target.result);
       }
     };
     reader.readAsText(file);
@@ -1040,6 +1050,12 @@ export default function TotalAnalysis() {
   // ── 입력 폼 ───────────────────────────────────────────────────────────────
   return (
     <div className="max-w-[1200px] mx-auto">
+      {/* ── 페이지 헤더 ── */}
+      <div className="mb-6 border-b border-zinc-200 pb-5">
+        <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5">AI 통합 분석</h1>
+        <p className="text-xs text-zinc-500 m-0">GitHub 레포지토리와 채용공고를 등록하면 이력서 기술 정합성 검증, 기술 Gap 분석, 맞춤형 보완 프로젝트 추천까지 한 번에 제공합니다.</p>
+      </div>
+
       {/* URL 입력 바 */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
@@ -1054,11 +1070,24 @@ export default function TotalAnalysis() {
             </div>
             <input
               type="text"
-              className="border-0 outline-none text-xs font-semibold text-zinc-700 bg-transparent w-36"
+              className="border-0 outline-none text-xs font-semibold text-zinc-700 bg-transparent w-32"
               placeholder="GitHub 아이디 입력"
               value={githubUsername}
               onChange={(e) => setGithubUsername(e.target.value)}
             />
+            {githubUsername && (
+              <a href={`https://github.com/${githubUsername}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={10} className="text-zinc-400 hover:text-zinc-600" />
+              </a>
+            )}
+            {setCurrentPage && (
+              <button
+                onClick={() => setCurrentPage('mypage')}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded border-0 cursor-pointer"
+                style={{ background: '#F0FDF4', color: '#16A34A' }}>
+                {githubUsername ? '변경' : '설정'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1220,7 +1249,7 @@ export default function TotalAnalysis() {
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-zinc-700">이력서 텍스트</label>
                 {originalResumeText && resumeText !== originalResumeText && (
-                  <button type="button" onClick={() => setResumeText(originalResumeText)}
+                  <button type="button" onClick={() => { setResumeText(originalResumeText); setResumeValidation(null); validateResumeText(originalResumeText); }}
                     className="text-[11px] border-0 bg-transparent cursor-pointer p-0" style={{ color: "#16A34A" }}>
                     원본으로 초기화
                   </button>
@@ -1228,11 +1257,46 @@ export default function TotalAnalysis() {
               </div>
               <textarea
                 className="form-textarea text-xs! leading-relaxed flex-1"
-                style={{ minHeight: "180px", maxHeight: "360px", resize: "vertical" }}
+                style={{
+                  minHeight: "180px", maxHeight: "360px", resize: "vertical",
+                  borderColor: resumeValidation && !resumeValidation.valid
+                    ? "#f87171"
+                    : resumeValidation?.valid
+                      ? "#4ade80"
+                      : undefined,
+                }}
                 placeholder="이력서 파일 업로드 시 자동으로 채워집니다. 직접 붙여넣기도 가능합니다."
                 value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setResumeText(val);
+                  setResumeValidation(null);
+                  if (validateTimerRef.current) clearTimeout(validateTimerRef.current);
+                  if (val.trim()) {
+                    setValidating(true);
+                    validateTimerRef.current = setTimeout(() => validateResumeText(val), 300);
+                  } else {
+                    setValidating(false);
+                  }
+                }}
               />
+              {validating && (
+                <p className="text-[11px] text-zinc-400 flex items-center gap-1">
+                  <Loader2 size={11} className="animate-spin" /> 이력서 확인 중...
+                </p>
+              )}
+              {!validating && resumeValidation && !resumeValidation.valid && (
+                <div className="flex gap-2 bg-red-50 border border-red-100 rounded-xl p-2.5 text-red-800 text-xs">
+                  <AlertTriangle size={13} className="text-red-400 shrink-0 mt-0.5" />
+                  <span>{resumeValidation.reason}</span>
+                </div>
+              )}
+              {!validating && resumeValidation?.valid && (
+                <div className="flex gap-2 bg-green-50 border border-green-100 rounded-xl p-2.5 text-green-800 text-xs">
+                  <CheckCircle2 size={13} className="text-green-500 shrink-0 mt-0.5" />
+                  <span>이력서 내용이 확인되었습니다.</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

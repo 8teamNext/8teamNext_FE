@@ -6,14 +6,17 @@ import Analysis from "./pages/Analysis";
 import Analysistest from "./pages/Analysis_test";
 import LeancageAnalysisTest from "./pages/leancageAnalysis_test";
 import ResumeGithubDetail from "./pages/ResumeGithubDetail";
-import MockInterview from "./pages/MockInterview";
 import Dashboard from "./pages/Dashboard";
+import MockInterview from "./pages/MockInterview";
 import MyPage from "./pages/MyPage";
 import TotalAnalysis from "./pages/TotalAnalysis";
 import { UserProfile, ResumeGithubResponse, api } from "./utils/api";
 import ChatWidget from "./components/ChatWidget";
 
 export default function App() {
+  useEffect(()=>{
+    window.scrollTo({top:0})
+  })
   const [currentPage, setCurrentPage] = useState<string>("total-analysis");
   // const [currentPage, setCurrentPage] = useState<string>("analysistest"); //민정님
   // const [currentPage, setCurrentPage] = useState<string>("leancage-test"); //팀장님
@@ -87,7 +90,7 @@ export default function App() {
       case "analysistest":
         return <Analysistest />;
       case "total-analysis":
-        return <TotalAnalysis />;
+        return <TotalAnalysis setCurrentPage={setCurrentPage} />;
       case "leancage-test":
         return <LeancageAnalysisTest />;
       case "interview":
@@ -96,6 +99,8 @@ export default function App() {
         return <Dashboard setCurrentPage={setCurrentPage} />;
       case "mypage":
         return <MyPage user={user} onProfileUpdate={handleProfileUpdate} />;
+      case "mypage-history":
+        return <MyPage user={user} onProfileUpdate={handleProfileUpdate} initialTab="history" />;
       default:
         return <Home setCurrentPage={setCurrentPage} user={user} />;
     }

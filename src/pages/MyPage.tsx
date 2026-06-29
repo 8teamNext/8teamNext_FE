@@ -34,10 +34,11 @@ import {
 interface MyPageProps {
   user: UserProfile | null;
   onProfileUpdate: (profile: Partial<UserProfile>) => void;
+  initialTab?: string;
 }
 
-export default function MyPage({ user, onProfileUpdate }: MyPageProps) {
-  const [activeTab, setActiveTab] = useState("profile"); // profile, history
+export default function MyPage({ user, onProfileUpdate, initialTab }: MyPageProps) {
+  const [activeTab, setActiveTab] = useState(initialTab ?? "profile"); // profile, history
 
   //채용공고 저장
   const [groupUrls, setGroupUrls] = useState<Record<Group, string[]>>({

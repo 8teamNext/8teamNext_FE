@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   GitBranch,
   MessageSquare,
@@ -18,19 +18,14 @@ interface HomeProps {
 }
 
 export default function Home({ setCurrentPage, user }: HomeProps) {
-  const [queryInput, setQueryInput] = useState('');
-
-  const handleQuerySubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (queryInput.trim()) {
-      setCurrentPage('analysis');
-    }
+  const handleGetStarted = () => {
+    setCurrentPage('analysis');
   };
 
   const features = [
     {
       id: 'analysis',
-      title: '종합 AI 커리어 리포트',
+      title: 'AI 통합 분석',
       desc: 'GitHub 소스코드 분석, 이력서 상호 검증, 목표 직무와의 기술 Gap 분석 및 보완 프로젝트 추천을 단 한 번의 클릭으로 확인합니다.',
       icon: Sparkles,
       badge: '통합 역량 평가',
@@ -42,10 +37,10 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
       desc: '자기소개서나 이력서에 작성된 프로젝트 경험과 기술 키워드를 추출하여 면접관의 의도를 담은 예상 질문과 모범 팁을 제공합니다.',
       icon: MessageSquare,
       badge: '실전 모의대비',
-      color: '#22C55E',
+      color: '#16A34A',
     },
     {
-      id: 'dashboard',
+      id: 'mypage-history',
       title: '커리어 대시보드',
       desc: '지금까지 진단받은 종합 분석 및 이력 상세 로그를 관리하고, 나의 취업 스택 성장 추이를 한눈에 모니터링합니다.',
       icon: GitBranch,
@@ -90,7 +85,6 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
               color: '#16A34A',
             }}
           >
-            <Sparkles size={11} />
             <span>AI-Powered Career Intelligence</span>
           </div>
 
@@ -105,65 +99,35 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
                 backgroundClip: 'text',
               }}
             >
-              AI 커리어 코파일럿
+              맞춤형 서비스
             </span>
           </h1>
 
           <p className="text-sm text-zinc-500 leading-relaxed mb-10 max-w-xl">
-            이력서 검증, 포트폴리오 분석, 역량 Gap 보완 프로젝트 추천까지.<br />
+            이력서 검증, 포트폴리오 분석, 역량 Gap 보완 프로젝트 추천까지<br />
             취업 성공률을 높일 구체적인 기술 스택 보완 액션 플랜을 제공합니다.
           </p>
 
-          {/* Search bar */}
-          <form
-            onSubmit={handleQuerySubmit}
-            className="w-full max-w-2xl flex items-center bg-white rounded-2xl p-2 mb-5 transition-all duration-200"
+          {/* Get Started button */}
+          <button
+            onClick={handleGetStarted}
+            className="text-white border-0 py-2.5 px-8 rounded-xl text-base font-extrabold cursor-pointer flex items-center transition-all duration-150 mb-5"
             style={{
-              border: '1.5px solid #e5e5e5',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            }}
-            onFocus={(e) => {
-              (e.currentTarget as HTMLFormElement).style.borderColor = '#16A34A';
-              (e.currentTarget as HTMLFormElement).style.boxShadow = '0 4px 24px rgba(22,163,74,0.15)';
-            }}
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                (e.currentTarget as HTMLFormElement).style.borderColor = '#e5e5e5';
-                (e.currentTarget as HTMLFormElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
-              }
+              background: 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
             }}
           >
-            <div className="pl-3 flex items-center justify-center">
-              <Search size={17} className="text-zinc-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="무엇이든 물어보세요 (예: 내 깃허브 저장소를 분석해서 우대기술 스택과 비교해줘)"
-              value={queryInput}
-              onChange={(e) => setQueryInput(e.target.value)}
-              className="flex-grow border-0 outline-none text-sm text-zinc-900 py-2.5 px-3 bg-transparent"
-            />
-            <button
-              type="submit"
-              className="text-white border-0 py-2.5 px-5 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-all duration-150 shrink-0"
-              style={{
-                background: 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)',
-                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
-              }}
-            >
-              <Sparkles size={13} />
-              <span>진단 시작</span>
-            </button>
-          </form>
+            <span>Get Started</span>
+          </button>
 
           {/* Quick action buttons */}
           <div className="flex items-center justify-center flex-wrap gap-2 mt-1">
-            <span className="text-xs text-zinc-400 mr-1 font-medium">추천 진단 바로가기:</span>
+            <span className="text-xs text-zinc-400 mr-1 font-medium"></span>
             <button
               onClick={() => setCurrentPage('analysis')}
               className="bg-white border border-zinc-200 py-1.5 px-3.5 rounded-full text-xs text-zinc-600 font-medium cursor-pointer hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-all duration-150"
             >
-              📊 종합 AI 커리어 리포트 시작
+              📊 AI 통합 분석
             </button>
             <button
               onClick={() => setCurrentPage('interview')}
@@ -172,7 +136,7 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
               💬 AI 모의 면접
             </button>
             <button
-              onClick={() => setCurrentPage('dashboard')}
+              onClick={() => setCurrentPage('mypage-history')}
               className="bg-white border border-zinc-200 py-1.5 px-3.5 rounded-full text-xs text-zinc-600 font-medium cursor-pointer hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-all duration-150"
             >
               📈 대시보드 로그 확인
