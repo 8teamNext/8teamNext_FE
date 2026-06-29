@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   GitBranch,
   MessageSquare,
@@ -10,7 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Card from '../components/Card';
-import { UserProfile } from '../utils/api';
+import { UserProfile, api } from '../utils/api';
 
 interface HomeProps {
   setCurrentPage: (page: string) => void;
@@ -18,6 +18,18 @@ interface HomeProps {
 }
 
 export default function Home({ setCurrentPage, user }: HomeProps) {
+  const [totalCount, setTotalCount] = useState<string>('집계중');
+
+  useEffect(() => {
+    api.getHistory()
+      .then((history) => {
+        setTotalCount(String(history.length) + '건');
+      })
+      .catch(() => {
+        setTotalCount('집계중');
+      });
+  }, []);
+
   const handleGetStarted = () => {
     setCurrentPage('analysis');
   };
@@ -50,9 +62,9 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
   ];
 
   const stats = [
-    { icon: Zap, label: '평균 분석 시간', value: '30초', sub: '초고속 AI 분석' },
-    { icon: Shield, label: '이력서 검증 정확도', value: '94%', sub: 'AI 교차 검증' },
-    { icon: BarChart3, label: '취업 성공률 향상', value: '2.3x', sub: '데이터 기반' },
+    { icon: Zap, label: '평균 분석 시간', value: '30초', sub: '초고속 AI 분석', accent: '#E53E3E' },
+    { icon: BarChart3, label: '검증 정확도', value: '집계중', sub: 'AI 교차 검증', accent: '#FFB347' },
+    { icon: Search, label: '누적 분석 건수', value: totalCount, sub: '지금도 분석 중', accent: '#16A34A' },
   ];
 
   return (
@@ -152,20 +164,26 @@ export default function Home({ setCurrentPage, user }: HomeProps) {
           return (
             <div
               key={i}
-              className="bg-white rounded-2xl p-5 flex items-center gap-4 border border-zinc-100"
-              style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
+              className="bg-white rounded-2xl p-5 flex items-center gap-4 border"
+              style={{
+                boxShadow: `0 2px 12px ${stat.accent}18`,
+                borderColor: `${stat.accent}99`,
+              }}
             >
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'linear-gradient(135deg, #F0FDF4, #FFF8F1)', border: '1px solid rgba(22,163,74,0.15)' }}
+                style={{
+                  background: `linear-gradient(135deg, ${stat.accent}18, ${stat.accent}08)`,
+                  border: `1px solid ${stat.accent}30`,
+                }}
               >
-                <Icon size={18} style={{ color: '#16A34A' }} />
+                <Icon size={18} style={{ color: stat.accent }} />
               </div>
-              <div>
-                <div className="text-xl font-extrabold text-zinc-900 leading-none mb-0.5">{stat.value}</div>
+              <div className="flex-1">
                 <div className="text-xs font-semibold text-zinc-700">{stat.label}</div>
                 <div className="text-[10px] text-zinc-400">{stat.sub}</div>
               </div>
+              <div className="text-xl font-extrabold leading-none ml-auto text-zinc-900">{stat.value}</div>
             </div>
           );
         })}
