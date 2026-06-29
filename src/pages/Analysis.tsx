@@ -140,10 +140,16 @@ export default function Analysis({
     setShowSaveModal(true);
   };
 
+  // const handleSaveConfirm = () => {
+  //   saveGroup(selectedGroup, registeredUrls);
+  //   setShowSaveModal(false);
+  //   setSaveNotice(`그룹 ${selectedGroup}에 저장되었습니다.`);
+  //   setTimeout(() => setSaveNotice(null), 2500);
+  // };
   const handleSaveConfirm = () => {
     saveGroup(selectedGroup, registeredUrls);
     setShowSaveModal(false);
-    setSaveNotice(`그룹 ${selectedGroup}에 저장되었습니다.`);
+    setSaveNotice(`"${loadGroup(selectedGroup)}" 그룹에 저장되었습니다.`);
     setTimeout(() => setSaveNotice(null), 2500);
   };
 
@@ -868,11 +874,15 @@ export default function Analysis({
   // ── Main Layout ────────────────────────────────────────
   return (
     <div className="max-w-[1200px] mx-auto">
-      
       {/* ── 페이지 헤더 ── */}
       <div className="mb-6 border-b border-zinc-200 pb-5">
-        <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5">AI 통합 분석</h1>
-        <p className="text-xs text-zinc-500 m-0">GitHub 레포지토리와 채용공고를 등록하면 이력서 기술 정합성 검증, 기술 Gap 분석, 맞춤형 보완 프로젝트 추천까지 한 번에 제공합니다.</p>
+        <h1 className="text-2xl font-bold text-zinc-900 m-0 mb-1.5">
+          AI 통합 분석
+        </h1>
+        <p className="text-xs text-zinc-500 m-0">
+          GitHub 레포지토리와 채용공고를 등록하면 이력서 기술 정합성 검증, 기술
+          Gap 분석, 맞춤형 보완 프로젝트 추천까지 한 번에 제공합니다.
+        </p>
       </div>
 
       {/* ── Top: 채용공고 URL 입력 + GitHub 아이콘 ── */}
@@ -1009,7 +1019,7 @@ export default function Analysis({
           open={showSaveModal}
           onClose={() => setShowSaveModal(false)}
           title="그룹 선택"
-          description={`현재 등록된 URL ${registeredUrls.length}개를 저장할 그룹을 선택하세요. 그룹당 최대 5개 저장 가능합니다.`}
+          description={`현재 URL ${registeredUrls.length}개를 "${loadGroup(selectedGroup)}" 그룹에 저장합니다.`}
           width={320}
         >
           <GroupSelector selected={selectedGroup} onChange={setSelectedGroup} />
@@ -1025,7 +1035,7 @@ export default function Analysis({
           open={showLoadModal}
           onClose={() => setShowLoadModal(false)}
           title="그룹 선택"
-          description="불러올 그룹을 선택하세요. 현재 입력창의 URL은 선택한 그룹으로 덮어씌워집니다."
+          description={`"${loadGroup(selectedGroup)}" 그룹의 URL을 불러옵니다. 현재 목록은 덮어씌워집니다.`}
           width={320}
         >
           <GroupSelector selected={selectedGroup} onChange={setSelectedGroup} />

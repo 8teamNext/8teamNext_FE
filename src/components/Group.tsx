@@ -59,7 +59,7 @@ export function GroupSelector({
               borderColor: selected === g ? "transparent" : "#eaeaea",
             }}
           >
-            그룹 {g}
+            {loadGroupName(g)}
             <span className="block text-[9px] mt-0.5 opacity-70">
               {saved.length > 0 ? `${saved.length}개` : "비어있음"}
             </span>
