@@ -458,4 +458,40 @@ export const api = {
         { content },
       )
       .then((r) => r.data),
+
+  chatSendMessageStream: async (
+    sessionId: number,
+    content: string,
+    onChunk: (chunk: string) => void,
+    onDone: () => void,
+  ): Promise<void> => {
+    const response = await fetch(`/api/chat/sessions/${sessionId}/messages/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) throw new Error(`Stream failed: ${response.status}`);
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() ?? "";
+
+      for (const part of parts) {
+        if (!part.startsWith("data: ")) continue;
+        try {
+          const data = JSON.parse(part.slice(6));
+          if (data.chunk) onChunk(data.chunk);
+          if (data.done) onDone();
+        } catch { /* 파싱 오류 무시 */ }
+      }
+    }
+  },
 };

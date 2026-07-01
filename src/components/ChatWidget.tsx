@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Plus, Trash2, ChevronLeft, MessagesSquare, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { api, ChatSession, ChatMessage, UserProfile } from "../utils/api";
 
 // ── 이미지 상태 타입 ──────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ interface LocalMessage {
   role: "user" | "assistant";
   content: string;
   pending?: boolean;
+  streaming?: boolean;
   botImage?: BotImageState;
 }
 
@@ -166,7 +168,7 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
     [currentSession],
   );
 
-  // ── 메시지 전송 ──────────────────────────────────────────────────────────
+  // ── 메시지 전송 (SSE 스트리밍) ───────────────────────────────────────────
   const sendMessage = useCallback(async () => {
     const text = input.trim();
     if (!text || sending) return;
@@ -186,7 +188,7 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
     setSending(true);
     setFabTimed("thinking");
 
-    // 낙관적 UI: thinking 상태 말풍선 즉시 표시
+    // 사용자 메시지 + 응답 대기 말풍선 (dots) 즉시 표시
     setMessages((prev) => [
       ...prev,
       { role: "user",      content: text },
@@ -194,20 +196,54 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
     ]);
 
     try {
-      const resp = await api.chatSendMessage(session.session_id, text);
-      const img  = inferBotImage(resp.content, isFirstAssistant);
-      setMessages((prev) => {
-        const next = [...prev];
-        const idx  = next.findLastIndex((m) => m.pending);
-        if (idx !== -1) next[idx] = { role: "assistant", content: resp.content, botImage: img };
-        return next;
-      });
-      setFabTimed("complete", 2000);
-      await loadSessions();
+      let accumulated = "";
+      let started = false;
+
+      await api.chatSendMessageStream(
+        session.session_id,
+        text,
+        (chunk) => {
+          accumulated += chunk;
+          const snap = accumulated;
+          if (!started) {
+            // 첫 청크: pending dots → 스트리밍 말풍선으로 전환
+            started = true;
+            setMessages((prev) => {
+              const next = [...prev];
+              const idx = next.findLastIndex((m) => m.pending);
+              if (idx !== -1)
+                next[idx] = { role: "assistant", content: snap, streaming: true, botImage: "basic" };
+              return next;
+            });
+          } else {
+            // 이후 청크: 누적 텍스트 업데이트
+            setMessages((prev) => {
+              const next = [...prev];
+              const idx = next.findLastIndex((m) => m.streaming);
+              if (idx !== -1) next[idx] = { ...next[idx], content: snap };
+              return next;
+            });
+          }
+        },
+        () => {
+          // 스트리밍 완료: 최종 botImage 확정
+          setMessages((prev) => {
+            const next = [...prev];
+            const idx = next.findLastIndex((m) => m.streaming);
+            if (idx !== -1) {
+              const img = inferBotImage(next[idx].content, isFirstAssistant);
+              next[idx] = { role: "assistant", content: next[idx].content, botImage: img };
+            }
+            return next;
+          });
+          setFabTimed("complete", 2000);
+          loadSessions();
+        },
+      );
     } catch {
       setMessages((prev) => {
         const next = [...prev];
-        const idx  = next.findLastIndex((m) => m.pending);
+        const idx = next.findLastIndex((m) => m.pending || m.streaming);
         if (idx !== -1)
           next[idx] = { role: "assistant", content: "죄송합니다, 오류가 발생했습니다.", botImage: "attention" };
         return next;
@@ -358,9 +394,9 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
                       </div>
                     )}
                     <div
-                      className={`max-w-[75%] px-3 py-2 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
+                      className={`max-w-[75%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
                         msg.role === "user"
-                          ? "text-white rounded-tr-sm"
+                          ? "text-white rounded-tr-sm whitespace-pre-wrap"
                           : "bg-zinc-50 text-zinc-800 rounded-tl-sm border border-zinc-100"
                       }`}
                       style={
@@ -375,6 +411,32 @@ export default function ChatWidget({ user }: ChatWidgetProps) {
                           <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:150ms]" />
                           <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:300ms]" />
                         </span>
+                      ) : msg.role === "assistant" ? (
+                        <>
+                          <ReactMarkdown
+                            components={{
+                              p:          ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+                              ul:         ({ children }) => <ul className="list-disc pl-4 mb-1.5 space-y-0.5">{children}</ul>,
+                              ol:         ({ children }) => <ol className="list-decimal pl-4 mb-1.5 space-y-0.5">{children}</ol>,
+                              li:         ({ children }) => <li className="leading-relaxed">{children}</li>,
+                              strong:     ({ children }) => <strong className="font-semibold text-zinc-900">{children}</strong>,
+                              em:         ({ children }) => <em className="italic">{children}</em>,
+                              h1:         ({ children }) => <h1 className="font-bold text-sm mb-1.5 mt-1">{children}</h1>,
+                              h2:         ({ children }) => <h2 className="font-bold text-xs mb-1 mt-1">{children}</h2>,
+                              h3:         ({ children }) => <h3 className="font-semibold text-xs mb-0.5 mt-1">{children}</h3>,
+                              pre:        ({ children }) => <pre className="bg-zinc-200 p-2 rounded-lg my-1 overflow-x-auto">{children}</pre>,
+                              code:       ({ children, className }) => <code className={`bg-zinc-200 px-1 py-0.5 rounded text-[10px] font-mono ${className ?? ""}`}>{children}</code>,
+                              blockquote: ({ children }) => <blockquote className="border-l-2 border-zinc-300 pl-2 text-zinc-500 my-1 italic">{children}</blockquote>,
+                              a:          ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-green-700 underline hover:text-green-800">{children}</a>,
+                              hr:         () => <hr className="border-zinc-200 my-1.5" />,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                          {msg.streaming && (
+                            <span className="inline-block w-0.5 h-3 bg-zinc-400 ml-0.5 animate-pulse align-middle" />
+                          )}
+                        </>
                       ) : (
                         msg.content
                       )}
